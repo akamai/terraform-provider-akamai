@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -42,7 +42,7 @@ func dataSourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m i
 
 	getSiemSettings := appsec.GetSiemSettingsRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -84,7 +84,7 @@ func dataSourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m i
 	if err := d.Set("json", string(jsonBody)); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-	d.SetId(strconv.Itoa(getSiemSettings.ConfigID))
+	d.SetId(strconv.FormatInt(getSiemSettings.ConfigID, 10))
 
 	return nil
 }

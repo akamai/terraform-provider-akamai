@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/dns"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -119,8 +119,9 @@ func resourceDNSv2Zone(config dnsZoneResourceConfig) *schema.Resource {
 							Required: true,
 						},
 						"secret": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:      schema.TypeString,
+							Required:  true,
+							Sensitive: true,
 						},
 					},
 				},
@@ -175,6 +176,7 @@ func resourceDNSv2Zone(config dnsZoneResourceConfig) *schema.Resource {
 									"secret": {
 										Type:             schema.TypeString,
 										Required:         true,
+										Sensitive:        true,
 										ValidateDiagFunc: tf.IsNotBlank,
 										Description: "A Base64-encoded string of data. When decoded, it needs to contain the correct number of bits for the chosen algorithm. " +
 											"If the input isn't correctly padded, the server applies the padding.",

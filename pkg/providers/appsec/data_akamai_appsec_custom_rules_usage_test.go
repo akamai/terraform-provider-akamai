@@ -5,10 +5,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -121,7 +121,7 @@ func mockGetCustomRulesUsageFailure(m *appsec.Mock) {
 		Return(nil, &serverError).Once()
 }
 
-func mockGetLatestConfiguration(client *appsec.Mock, configID int, times int) {
+func mockGetLatestConfiguration(client *appsec.Mock, configID int64, times int) {
 	client.On("GetConfiguration", mock.Anything, appsec.GetConfigurationRequest{ConfigID: configID}).
 		Return(&appsec.GetConfigurationResponse{
 			FileType:          "RBAC",
@@ -134,7 +134,7 @@ func mockGetLatestConfiguration(client *appsec.Mock, configID int, times int) {
 		}, nil).Times(times)
 }
 
-func mockGetLatestConfigurationFailure(client *appsec.Mock, configID int, times int) {
+func mockGetLatestConfigurationFailure(client *appsec.Mock, configID int64, times int) {
 	client.On("GetConfiguration", mock.Anything, appsec.GetConfigurationRequest{ConfigID: configID}).
 		Return(nil, &serverError).Times(times)
 }

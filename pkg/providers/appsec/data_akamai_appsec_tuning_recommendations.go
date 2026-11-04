@@ -6,9 +6,9 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -63,7 +63,7 @@ func dataSourceTuningRecommendationsRead(ctx context.Context, d *schema.Resource
 	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceTuningRecommendationsRead")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -168,7 +168,7 @@ func dataSourceTuningRecommendationsRead(ctx context.Context, d *schema.Resource
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 
 	return nil
 }

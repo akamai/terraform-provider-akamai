@@ -5,9 +5,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +15,7 @@ import (
 func TestAkamaiIPGeo_res_block(t *testing.T) {
 	t.Parallel()
 	var (
-		configVersion = func(configId int, client *appsec.Mock) appsec.GetConfigurationResponse {
+		configVersion = func(configId int64, client *appsec.Mock) appsec.GetConfigurationResponse {
 			configResponse := appsec.GetConfigurationResponse{}
 			err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
 			require.NoError(t, err)
@@ -28,7 +28,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			return configResponse
 		}
 
-		getIPGeoResponse = func(configId int, version int, policyId string, path string, client *appsec.Mock) appsec.GetIPGeoResponse {
+		getIPGeoResponse = func(configId int64, version int64, policyId string, path string, client *appsec.Mock) appsec.GetIPGeoResponse {
 			getIPGeoResponse := appsec.GetIPGeoResponse{}
 			err := json.Unmarshal(testutils.LoadFixtureBytes(t, path), &getIPGeoResponse)
 			require.NoError(t, err)
@@ -53,7 +53,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			return updateIPGeoResponse
 		}
 
-		updateIPGeoProtectionResponseAllProtectionsFalse = func(configId int, version int, policyId string, path string, client *appsec.Mock) appsec.UpdateIPGeoProtectionResponse {
+		updateIPGeoProtectionResponseAllProtectionsFalse = func(configId int64, version int64, policyId string, path string, client *appsec.Mock) appsec.UpdateIPGeoProtectionResponse {
 			updateIPGeoProtectionResponseAllProtectionsFalse := appsec.UpdateIPGeoProtectionResponse{}
 			err := json.Unmarshal(testutils.LoadFixtureBytes(t, path), &updateIPGeoProtectionResponseAllProtectionsFalse)
 			require.NoError(t, err)

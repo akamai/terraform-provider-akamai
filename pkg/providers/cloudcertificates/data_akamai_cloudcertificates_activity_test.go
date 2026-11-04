@@ -7,12 +7,12 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/ptr"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	tst "github.com/akamai/terraform-provider-akamai/v11/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cloudcertificates"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/ptr"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	tst "github.com/akamai/terraform-provider-akamai/v12/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -135,11 +135,14 @@ func TestDataCertificatesActivity(t *testing.T) {
 				},
 			},
 		},
-		"happy path - empty page with cursor stops pagination": {
+		"happy path - empty page with valid cursor continues pagination": {
 			init: func(m *cloudcertificates.Mock) {
 				mockListLineageActivity(m, maxPageSize, "", &cloudcertificates.ListLineageActivityResponse{
 					Events:     []cloudcertificates.LineageActivityEvent{},
 					NextCursor: ptr.To("stale-cursor"),
+				}).Times(3)
+				mockListLineageActivity(m, maxPageSize, "stale-cursor", &cloudcertificates.ListLineageActivityResponse{
+					Events: []cloudcertificates.LineageActivityEvent{},
 				}).Times(3)
 			},
 			steps: []resource.TestStep{
@@ -303,6 +306,22 @@ func TestDataCertificatesActivity(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataActivity/without_limit.tf"),
 					ExpectError: regexp.MustCompile("No certificate lineage found with ID 500005"),
+				},
+			},
+		},
+		"nil page without error": {
+			init: func(m *cloudcertificates.Mock) {
+				m.On("ListLineageActivity", testutils.MockContext, cloudcertificates.ListLineageActivityRequest{
+					LineageID: 500005,
+					PageSize:  maxPageSize,
+				}).Return((*cloudcertificates.ListLineageActivityResponse)(nil), nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataActivity/without_limit.tf"),
+					ExpectError: regexp.MustCompile(`(?s)` +
+						regexp.QuoteMeta("Failed to retrieve lineage activity") + `.*` +
+						regexp.QuoteMeta("received nil page without error")),
 				},
 			},
 		},

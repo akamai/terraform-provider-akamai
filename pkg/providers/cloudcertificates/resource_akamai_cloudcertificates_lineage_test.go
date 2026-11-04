@@ -3,12 +3,12 @@ package cloudcertificates
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/ptr"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	tst "github.com/akamai/terraform-provider-akamai/v11/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cloudcertificates"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/ptr"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	tst "github.com/akamai/terraform-provider-akamai/v12/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -98,6 +98,46 @@ func TestLineageResource(t *testing.T) {
 						CheckMissing("current_production").
 						CheckMissing("previous_production").
 						CheckMissing("current_staging").
+						Build(),
+				},
+			},
+		},
+		"happy path - create with geo_class CONTIGUOUS_US and secure_network ENHANCED_TLS": {
+			init: func(m *cloudcertificates.Mock) {
+				req := createLineageRequestMinimal()
+				req.Body.GeoClass = cloudcertificates.GeoClassContiguousUS
+				resp := createLineageResponseMinimal()
+				resp.GeoClass = "CONTIGUOUS_US"
+				mockCreateLineage(m, req, resp)
+				mockGetLineage(m, resp.LineageID, resp, 1)
+				mockDeleteLineage(m, resp.LineageID)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesLineage/create_geo_class_contiguous_us.tf"),
+					Check: test.NewStateChecker(dsName).
+						CheckEqual("geo_class", "CONTIGUOUS_US").
+						CheckEqual("secure_network", "ENHANCED_TLS").
+						Build(),
+				},
+			},
+		},
+		"happy path - create with geo_class RESERVED_GLOBAL and secure_network ENHANCED_TLS": {
+			init: func(m *cloudcertificates.Mock) {
+				req := createLineageRequestMinimal()
+				req.Body.GeoClass = cloudcertificates.GeoClassReservedGlobal
+				resp := createLineageResponseMinimal()
+				resp.GeoClass = "RESERVED_GLOBAL"
+				mockCreateLineage(m, req, resp)
+				mockGetLineage(m, resp.LineageID, resp, 1)
+				mockDeleteLineage(m, resp.LineageID)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesLineage/create_geo_class_reserved_global.tf"),
+					Check: test.NewStateChecker(dsName).
+						CheckEqual("geo_class", "RESERVED_GLOBAL").
+						CheckEqual("secure_network", "ENHANCED_TLS").
 						Build(),
 				},
 			},
@@ -223,6 +263,28 @@ func TestLineageResource(t *testing.T) {
 				},
 			},
 		},
+		"happy path - rename proceeds when conflict check returns nil page": {
+			init: func(m *cloudcertificates.Mock) {
+				mockCreateLineage(m, createLineageRequestFull(), createLineageResponseFull())
+				mockGetLineage(m, 500001, createLineageResponseFull(), 2)
+				m.On("ListLineages", testutils.MockContext, cloudcertificates.ListLineagesRequest{
+					LineageName: "renamed-lineage", PageSize: cloudcertificates.MaxListLineagesPageSize,
+				}).Return((*cloudcertificates.ListLineagesResponse)(nil), nil).Times(2)
+				mockRenameLineage(m, 500001, "renamed-lineage", renameLineageResponseFull())
+				mockGetLineage(m, 500001, renamedLineageResponseFull(), 2)
+				mockDeleteLineage(m, 500001)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesLineage/create_full.tf"),
+					Check:  test.NewStateChecker(dsName).CheckEqual("lineage_name", "test non-validated domain").Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesLineage/rename.tf"),
+					Check:  test.NewStateChecker(dsName).CheckEqual("lineage_name", "renamed-lineage").Build(),
+				},
+			},
+		},
 		"happy path - create then rename, generation refresh fails after rename (warns, keeps rename)": {
 			init: func(m *cloudcertificates.Mock) {
 				mockCreateLineage(m, createLineageRequestFull(), createLineageResponseFull())
@@ -276,8 +338,9 @@ func TestLineageResource(t *testing.T) {
 				},
 			},
 		},
-		// geo_class has no analogous "change" case: STANDARD_WORLDWIDE is currently its only valid value (see the
-		// TODO on its schema definition), so there is no other value to plan a change to.
+		// geo_class is RequiresReplace, same as every other create-only attribute - no dedicated "change" case
+		// beyond the ones above (CONTIGUOUS_US/RESERVED_GLOBAL happy paths), since changing it always destroys
+		// and recreates the lineage just like contract_id/group_id/etc. below.
 		"happy path - change contract_id (requires replace)": {
 			init: func(m *cloudcertificates.Mock) {
 				mockCreateLineage(m, createLineageRequestFull(), createLineageResponseFull())
@@ -518,6 +581,26 @@ func TestLineageResource(t *testing.T) {
 				mockGetLineage(m, 500001, createLineageResponseFull(), 2)
 				// plan-time check finds an existing lineage with this name; RenameLineage is never called
 				mockListLineagesConflict(m, "renamed-lineage", 999999)
+				mockDeleteLineage(m, 500001)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesLineage/create_full.tf"),
+					Check: test.NewStateChecker(dsName).
+						CheckEqual("lineage_name", "test non-validated domain").
+						Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesLineage/rename.tf"),
+					ExpectError: tst.ErrPattern(`A lineage named "renamed-lineage" already exists for this account\.`),
+				},
+			},
+		},
+		"expect error - rename blocked at plan time, name conflict on a later page": {
+			init: func(m *cloudcertificates.Mock) {
+				mockCreateLineage(m, createLineageRequestFull(), createLineageResponseFull())
+				mockGetLineage(m, 500001, createLineageResponseFull(), 2)
+				mockListLineagesConflictOnSecondPage(m, "renamed-lineage", 999999)
 				mockDeleteLineage(m, 500001)
 			},
 			steps: []resource.TestStep{
@@ -927,7 +1010,24 @@ func TestLineageResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesLineage/invalid_geo_class.tf"),
-					ExpectError: tst.ErrPattern(`Attribute geo_class value must be one of: \["STANDARD_WORLDWIDE"\], got: "INVALID_GEO_CLASS"`),
+					ExpectError: tst.ErrPattern(`Attribute geo_class value must be one of: \["STANDARD_WORLDWIDE" "CONTIGUOUS_US" "RESERVED_GLOBAL"\], got: "INVALID_GEO_CLASS"`),
+				},
+			},
+		},
+		"validation error - geo_class CONTIGUOUS_US requires secure_network ENHANCED_TLS": {
+			// ValidateConfig rejects this outright, before CreateLineage is ever called.
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesLineage/geo_class_contiguous_us_standard_tls.tf"),
+					ExpectError: tst.ErrPattern(`geo_class "CONTIGUOUS_US" is only valid when secure_network is "ENHANCED_TLS"\.`),
+				},
+			},
+		},
+		"validation error - geo_class RESERVED_GLOBAL requires secure_network ENHANCED_TLS": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesLineage/geo_class_reserved_global_standard_tls.tf"),
+					ExpectError: tst.ErrPattern(`geo_class "RESERVED_GLOBAL" is only valid when secure_network is "ENHANCED_TLS"\.`),
 				},
 			},
 		},

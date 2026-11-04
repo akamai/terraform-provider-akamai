@@ -3,8 +3,8 @@ package gtm
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -447,6 +447,7 @@ var (
 								},
 								"test_object_password": schema.StringAttribute{
 									Computed:    true,
+									Sensitive:   true,
 									Description: "Specifies the test object's password.",
 								},
 								"test_timeout": schema.Float64Attribute{
@@ -463,6 +464,7 @@ var (
 								},
 								"ssl_client_private_key": schema.StringAttribute{
 									Computed:    true,
+									Sensitive:   true,
 									Description: "Indicates a base64-encoded private key.",
 								},
 								"alternate_ca_certificates": schema.ListAttribute{
@@ -1078,6 +1080,7 @@ func (d *domainDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 			"default_ssl_client_private_key": schema.StringAttribute{
 				MarkdownDescription: "Specifies an optional Base64-encoded private key that corresponds with the TLS certificate for TLS-based liveness tests (HTTPS, SMTPS, POPS, and TCPS).",
 				Computed:            true,
+				Sensitive:           true,
 			},
 			"default_timeout_penalty": schema.Int64Attribute{
 				MarkdownDescription: "Specifies the timeout penalty score.",

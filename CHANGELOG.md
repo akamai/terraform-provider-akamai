@@ -1,5 +1,95 @@
 # RELEASE NOTES
 
+## 12.0.0 (Nov 4, 2026)
+
+#### BREAKING CHANGES:
+
+* CPS
+  * Removed the deprecated `network_configuration.clone_dns_names` field from the `akamai_cps_dv_enrollment` and `akamai_cps_third_party_enrollment` resources and from the `akamai_cps_enrollment` and the `akamai_cps_enrollments` data sources. Use the `network_configuration.enable_for_all_sans` field instead.
+
+* Cloudlets
+  * Removed the `akaRuleId` and the `location` fields from the `match_rules` attribute of the `akamai_cloudlets_policy` resource, since it's not possible to reliably reflect these server-generated values in the resource's state without causing an unexpected `terraform plan` diff. Use the `akamai_cloudlets_policy` or `akamai_cloudlets_shared_policy` data source to read them ([I#659](https://github.com/akamai/terraform-provider-akamai/issues/659)).
+
+* GTM
+  * Changed the `type`, `ttl`, and the `rdata` attributes in the `static_rr_set` block of the `akamai_gtm_property` resource from optional to required.
+
+* IAM
+  * Fixed the `akamai_iam_user` resource so that removing `secondary_email` from the configuration now correctly clears a previously set value on update, instead of silently leaving it unchanged ([I#699](https://github.com/akamai/terraform-provider-akamai/issues/699)).
+  * Corrected `secondary_email` to no longer accept an empty string in configuration.
+
+* PAPI
+  * Changed the `options` attribute in the `akamai_edge_hostnames` and the `akamai_edge_hostname` data sources from a list to a string.
+
+#### FEATURES/ENHANCEMENTS:
+
+* Appsec
+  * Changed the following resources to store JSON attributes in state in a normalized form (sorted keys, no extra whitespace) at read time:
+    * `akamai_appsec_advanced_settings_attack_payload_logging`
+    * `akamai_appsec_advanced_settings_logging`
+    * `akamai_appsec_advanced_settings_pragma_header`
+    * `akamai_appsec_attack_group`
+    * `akamai_appsec_custom_deny`
+    * `akamai_appsec_eval_group`
+    * `akamai_appsec_eval_penalty_box_conditions`
+    * `akamai_appsec_eval_rule`
+    * `akamai_appsec_malware_policy`
+    * `akamai_appsec_malware_policy_actions`
+    * `akamai_appsec_match_target`
+    * `akamai_appsec_match_target_sequence`
+    * `akamai_appsec_penalty_box_conditions`
+    * `akamai_appsec_rate_policy`
+    * `akamai_appsec_reputation_profile`
+    * `akamai_appsec_rule`
+  * Added a caching layer for the `akamai_appsec_rate_policy`, `akamai_appsec_match_target`, and the `akamai_appsec_reputation_profile` resources to reduce API calls.
+  * Improved the `akamai_appsec_activations` polling to use progressive backoff instead of a fixed interval, reducing unnecessary API calls.
+
+* Appsec (Beta)
+  * Added a new resource `akamai_appsec_script_behavior_rule` - manages Client-Side Protection script behavior rules for a security policy.
+  * Added new data sources:
+    * `akamai_appsec_script_behavior_rule` - retrieves a single script behavior rule for a security policy.
+    * `akamai_appsec_script_behavior_rules` - retrieves all script behavior rules for a security policy.
+    * `akamai_appsec_clientside_protection_configuration` - retrieves the CPC configuration for a security policy.
+  * Added a new resource:
+    * `akamai_appsec_clientside_protection_configuration` - manages Client-side Protection & Compliance (CPC) configuration for a security policy.
+
+* Cloud Certificates (Beta)
+  * Added the `akamai_cloudcertificates_renew` action to renew a certificate lineage by creating a new head generation with fresh CSRs for every algorithm.
+  * Added the `akamai_cloudcertificates_rollback` action to roll a certificate lineage's production generation back to its previous production generation.
+  * Added the `akamai_cloudcertificates_replace_staging` action to replace a certificate lineage's staging generation with its current or previous production generation.
+  * Added the `akamai_cloudcertificates_delete_generation` action to permanently delete a single certificate generation from a lineage.
+  * Changed paginated data-source behavior to return an error when the API returns a repeated cursor, preventing incomplete results or continued requests with repeated cursors. This affects the `akamai_cloudcertificates_activations`, `akamai_cloudcertificates_activity`, `akamai_cloudcertificates_bindings`, and `akamai_cloudcertificates_lineages` data sources.
+  * Replaced the `error_types` string attribute with an `errors` list of `message`/`type` objects on the `akamai_cloudcertificates_activation` resource and the `akamai_cloudcertificates_activation_status` and `akamai_cloudcertificates_activations` data sources.
+  * Removed the `total_hostname_count` and `in_progress_hostname_count` attributes from the `akamai_cloudcertificates_activation` resource and the `akamai_cloudcertificates_activation_status` and `akamai_cloudcertificates_activations` data sources, as they are no longer provided by the API.
+  * Added the `CONTIGUOUS_US` and `RESERVED_GLOBAL` values for the `geo_class` attribute on the `akamai_cloudcertificates_lineage` resource. Both require `secure_network` to be `ENHANCED_TLS`; this is now enforced at plan time.
+
+* PAPI
+  * Added support for the `delivery_policy` attribute and map details in the `akamai_edge_hostnames` and the `akamai_edge_hostname` data sources when `options` is set to `mapDetails`.
+  * Added support for the new rule format [`v2026-09-30`](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2026-09-30). Compared to the previous rule format, the `downloadNotification` behavior is no longer supported.
+  * Increased the default timeout of the `akamai_edge_hostname` resource from 45 minutes to 3 hours and removed the 15-retry limit when waiting for edge hostname propagation.
+
+#### BUG FIXES:
+
+* General
+  * Marked credential, secret, token, password, and private-key schema attributes as sensitive to prevent Terraform from displaying them in plan and apply output. Affected resources and data sources: `akamai_dns_zone`, `akamai_gtm_property`, `akamai_gtm_domain`, `akamai_iam_api_clients`, `akamai_cloudwrapper_configuration`, `akamai_property_hostnames`, and `akamai_property_rules_builder`. Thanks for reporting this issue, @kta1kri .
+
+* Appsec
+  * Fixed the `akamai_appsec_advanced_settings_url_evasion_defense` resource failing with the `Provider produced inconsistent result after apply` error when `bypass_lists` or `rules` were not configured, or when `rules` were added to an existing resource.
+  * Added validation to the `akamai_appsec_advanced_settings_url_evasion_defense` resource that rejects an empty `rules` list. Omit `rules` instead.
+  * Fixed the `akamai_appsec_advanced_settings_url_evasion_defense` resource failing with `Provider produced inconsistent result after apply` when `rules` were reordered or inserted, as the computed `name` and `description` of a rule were taken from the rule previously at the same position instead of the same `rule_id`.
+  * Fixed type mismatch for `config_id` and `version` across all appsec resources by updating internal handling to use `int64`, aligning with EG library type changes.
+  * Fixed spurious plan drift for the `akamai_appsec_rate_policy` resource where Terraform detected a change on every plan even when the configuration had not changed. This occurred because the API returns server-assigned fields (`id`, `configId`, `configVersion`) that customers do not write in their HCL config. These fields are now correctly ignored during plan comparison.
+
+* CPS
+  * Fixed an issue in the `akamai_cps_dv_enrollment` and `akamai_cps_third_party_enrollment` resources where deletion got stuck until timeout when warnings required acknowledgement. Optional `acknowledge_deletion_warnings` attribute was introduced. It acknowledges deletion warnings when set to `true`. Default is `false`. ([I#759](https://github.com/akamai/terraform-provider-akamai/issues/759)).
+  * Fixed an issue where `dns_names` was not set correctly in the `akamai_cps_dv_enrollment` and the `akamai_cps_third_party_enrollment` resources when `enable_for_all_sans` was set to `true`.
+
+* Cloud Certificates (Beta)
+  * Fixed the `akamai_cloudcertificates_lineage` resource's plan-time name-conflict check to detect matching names on subsequent pages of API results.
+  * Fixed incomplete results from the `akamai_cloudcertificates_activity`, `akamai_cloudcertificates_bindings`, and the `akamai_cloudcertificates_lineages` data sources by following valid pagination cursors after empty pages.
+
+* PAPI
+  * Fixed the `akamai_property_activation` resource getting stuck retrying a deactivation indefinitely when the property version had already been deactivated outside Terraform, causing repeated 422 errors and apply timeouts ([I#793](https://github.com/akamai/terraform-provider-akamai/issues/793)).
+
 ## 11.1.0 (Sep 30, 2026)
 
 #### FEATURES/ENHANCEMENTS:

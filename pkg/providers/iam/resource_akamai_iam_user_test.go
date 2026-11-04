@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -48,7 +48,7 @@ func TestResourceUser(t *testing.T) {
 		TimeZone:                 "timezone",
 		JobTitle:                 "job title",
 		TFAEnabled:               false,
-		SecondaryEmail:           "secondary.email@example.com",
+		SecondaryEmail:           ptr.To("secondary.email@example.com"),
 		MobilePhone:              "(222) 222-2222",
 		Address:                  "123 B Street",
 		City:                     "B-Town",
@@ -144,6 +144,11 @@ func TestResourceUser(t *testing.T) {
 			user.SessionTimeOut = ptr.To(0)
 		}
 
+		var secondaryEmail string
+		if user.SecondaryEmail != nil {
+			secondaryEmail = *user.SecondaryEmail
+		}
+
 		var authGrantsJSON string
 		if len(user.AuthGrants) > 0 {
 			marshalledAuthGrants, err := json.Marshal(user.AuthGrants)
@@ -175,7 +180,7 @@ func TestResourceUser(t *testing.T) {
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_name", user.UserName),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "job_title", user.JobTitle),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "time_zone", user.TimeZone),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "secondary_email", strings.ToLower(user.SecondaryEmail)),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "secondary_email", strings.ToLower(secondaryEmail)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "mobile_phone", user.MobilePhone),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "address", user.Address),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "city", user.City),
@@ -302,6 +307,37 @@ func TestResourceUser(t *testing.T) {
 		Notifications: &notifications,
 	}
 
+	basicUserInfoWithSecondaryEmail := basicUserInfo
+	basicUserInfoWithSecondaryEmail.SecondaryEmail = ptr.To("secondary.email@example.com")
+
+	userCreateWithSecondaryEmail := userCreate
+	userCreateWithSecondaryEmail.UserBasicInfo = basicUserInfoWithSecondaryEmail
+
+	userCreateWithSecondaryEmailRequest := iam.CreateUserRequest{
+		UserBasicInfo: basicUserInfoWithSecondaryEmail,
+		AuthGrants:    authGrantsCreateRequest,
+		Notifications: &notifications,
+	}
+
+	basicUserInfoWithSecondaryEmailOne := basicUserInfo
+	basicUserInfoWithSecondaryEmailOne.SecondaryEmail = ptr.To("user1@example.com")
+
+	userCreateWithSecondaryEmailOne := userCreate
+	userCreateWithSecondaryEmailOne.UserBasicInfo = basicUserInfoWithSecondaryEmailOne
+
+	userCreateWithSecondaryEmailOneRequest := iam.CreateUserRequest{
+		UserBasicInfo: basicUserInfoWithSecondaryEmailOne,
+		AuthGrants:    authGrantsCreateRequest,
+		Notifications: &notifications,
+	}
+
+	// clearing secondary_email via a reference that resolves to null must still send an explicit empty string
+	userClearedSecondaryEmailFromInterpolatedRequest := basicUserInfoWithSecondaryEmailOne
+	userClearedSecondaryEmailFromInterpolatedRequest.SecondaryEmail = ptr.To("")
+
+	userClearedSecondaryEmailFromInterpolated := userCreateWithSecondaryEmailOne
+	userClearedSecondaryEmailFromInterpolated.SecondaryEmail = nil
+
 	userCreateLocked := iam.User{
 		UserBasicInfo:      basicUserInfo,
 		IdentityID:         id,
@@ -333,6 +369,13 @@ func TestResourceUser(t *testing.T) {
 	}
 	userUpdateInfo.Phone = ""
 	userUpdateInfo.MobilePhone = "+49 98765 4321"
+
+	// omitting secondary_email from config must still send an explicit empty string on update, to clear a previously set value
+	userClearedSecondaryEmailRequest := userUpdateInfo.UserBasicInfo
+	userClearedSecondaryEmailRequest.SecondaryEmail = ptr.To("")
+
+	userClearedSecondaryEmail := userUpdateInfo
+	userClearedSecondaryEmail.SecondaryEmail = nil
 
 	userUpdateGrants := iam.User{
 		UserBasicInfo:      basicUserInfo,
@@ -392,6 +435,64 @@ func TestResourceUser(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
 					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreate, false), checkDefaultUserNotificationsAttributes(userCreate)),
+				},
+			},
+		},
+		"basic - secondary_email set to empty string on create - error": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/error_secondary_email_empty_string.tf"),
+					ExpectError: regexp.MustCompile(`(?s)Error: provided value cannot be blank.*secondary_email\s+=\s+""`),
+				},
+			},
+		},
+		"basic - secondary_email set on create": {
+			init: func(m *iam.Mock) {
+				// create
+				expectResourceIAMUserCreatePhase(m, userCreateWithSecondaryEmailRequest, userCreateWithSecondaryEmail, false, false, nil, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreateWithSecondaryEmail, nil).Times(2)
+
+				// delete
+				expectResourceIAMUserDeletePhase(m, userCreateWithSecondaryEmail, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_secondary_email.tf"),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreateWithSecondaryEmail, false), checkDefaultUserNotificationsAttributes(userCreateWithSecondaryEmail)),
+				},
+			},
+		},
+		"basic - secondary_email set from reference then cleared to null reference": {
+			init: func(m *iam.Mock) {
+				// step 1: create with secondary_email resolved from an unknown-at-plan-time reference
+				expectResourceIAMUserCreatePhase(m, userCreateWithSecondaryEmailOneRequest, userCreateWithSecondaryEmailOne, false, false, nil, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreateWithSecondaryEmailOne, nil).Times(2)
+
+				// plan
+				expectResourceIAMUserReadPhase(m, userCreateWithSecondaryEmailOne, nil).Once()
+				// step 2: secondary_email resolves to null via reference;
+				// this must clear the field, not be rejected as an explicit empty string
+				expectResourceIAMUserInfoUpdatePhase(m, userClearedSecondaryEmailFromInterpolated.IdentityID, userClearedSecondaryEmailFromInterpolatedRequest, nil).Once()
+				expectResourceIAMUserReadPhase(m, userClearedSecondaryEmailFromInterpolated, nil).Times(2)
+
+				// delete
+				expectResourceIAMUserDeletePhase(m, userClearedSecondaryEmailFromInterpolated, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_user_with_secondary_email_from_reference.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						checkUserAttributes(userCreateWithSecondaryEmailOne, false),
+						checkDefaultUserNotificationsAttributes(userCreateWithSecondaryEmailOne),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/clear_secondary_email_via_null_reference.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						checkUserAttributes(userClearedSecondaryEmailFromInterpolated, false),
+						checkDefaultUserNotificationsAttributes(userClearedSecondaryEmailFromInterpolated),
+						resource.TestCheckResourceAttr("akamai_iam_user.test", "secondary_email", ""),
+					),
 				},
 			},
 		},
@@ -587,6 +688,107 @@ func TestResourceUser(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/update_user_info.tf"),
 					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userUpdateInfo, false), checkDefaultUserNotificationsAttributes(userUpdateInfo)),
+				},
+			},
+		},
+		"update user info - sets secondary_email on update": {
+			init: func(m *iam.Mock) {
+				// create (without secondary_email)
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, false, nil, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
+
+				// plan
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Once()
+				// set secondary_email
+				expectResourceIAMUserInfoUpdatePhase(m, userCreateWithSecondaryEmail.IdentityID, basicUserInfoWithSecondaryEmail, nil).Once()
+				expectResourceIAMUserReadPhase(m, userCreateWithSecondaryEmail, nil).Times(2)
+
+				// delete
+				expectResourceIAMUserDeletePhase(m, userCreateWithSecondaryEmail, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreate, false), checkDefaultUserNotificationsAttributes(userCreate)),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_secondary_email.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						checkUserAttributes(userCreateWithSecondaryEmail, false),
+						checkDefaultUserNotificationsAttributes(userCreateWithSecondaryEmail),
+						resource.TestCheckResourceAttr("akamai_iam_user.test", "secondary_email", "secondary.email@example.com"),
+					),
+				},
+			},
+		},
+		"update user info - clears secondary_email by omitting it from config": {
+			init: func(m *iam.Mock) {
+				// create
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, false, nil, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
+
+				// plan
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Once()
+				// set secondary_email
+				expectResourceIAMUserInfoUpdatePhase(m, userUpdateInfo.IdentityID, userUpdateInfo.UserBasicInfo, nil).Once()
+				expectResourceIAMUserReadPhase(m, userUpdateInfo, nil).Times(2)
+
+				// plan
+				expectResourceIAMUserReadPhase(m, userUpdateInfo, nil).Once()
+				// clear secondary_email by omitting it - the request must still carry an explicit empty string
+				expectResourceIAMUserInfoUpdatePhase(m, userClearedSecondaryEmail.IdentityID, userClearedSecondaryEmailRequest, nil).Once()
+				expectResourceIAMUserReadPhase(m, userClearedSecondaryEmail, nil).Times(2)
+
+				// delete
+				expectResourceIAMUserDeletePhase(m, userClearedSecondaryEmail, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreate, false), checkDefaultUserNotificationsAttributes(userCreate)),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/update_user_info.tf"),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userUpdateInfo, false), checkDefaultUserNotificationsAttributes(userUpdateInfo)),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/update_user_info_secondary_email_empty.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						checkUserAttributes(userClearedSecondaryEmail, false),
+						checkDefaultUserNotificationsAttributes(userClearedSecondaryEmail),
+						resource.TestCheckResourceAttr("akamai_iam_user.test", "secondary_email", ""),
+					),
+				},
+			},
+		},
+		"update user info - secondary_email set to empty string on update - error": {
+			init: func(m *iam.Mock) {
+				// create
+				expectResourceIAMUserCreatePhase(m, userCreateRequest, userCreate, false, false, nil, nil, nil)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Times(2)
+
+				// plan (the invalid config fails schema validation before any API call is made)
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Once()
+
+				// revert to a valid config so the test framework's post-test destroy doesn't
+				// re-validate the invalid config left behind by the previous, expected-error step
+				expectResourceIAMUserReadPhase(m, userCreate, nil).Once()
+
+				// delete
+				expectResourceIAMUserDeletePhase(m, userCreate, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreate, false), checkDefaultUserNotificationsAttributes(userCreate)),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/update_user_info_secondary_email_empty_string.tf"),
+					ExpectError: regexp.MustCompile(`(?s)Error: provided value cannot be blank.*secondary_email\s*=\s*""`),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic.tf"),
+					Check:  resource.ComposeTestCheckFunc(checkUserAttributes(userCreate, false), checkDefaultUserNotificationsAttributes(userCreate)),
 				},
 			},
 		},
@@ -946,6 +1148,12 @@ func TestResourceUser(t *testing.T) {
 				tc.init(client.IAM)
 			}
 			resource.UnitTest(t, resource.TestCase{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"random": {
+						Source:            "registry.terraform.io/hashicorp/random",
+						VersionConstraint: "3.1.0",
+					},
+				},
 				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
 				IsUnitTest:               true,
 				Steps:                    tc.steps,

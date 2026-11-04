@@ -6,17 +6,14 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestResourceBotDetectionAction(t *testing.T) {
-	t.Parallel()
 	t.Run("ResourceBotDetectionAction", func(t *testing.T) {
-		t.Parallel()
-
 		expectedCreateJSON := `{"testKey":"testValue3"}`
 		expectedUpdateJSON := `{"testKey":"updated_testValue3"}`
 		client := setupMockedBotDetectionActionBotmanClient(false)
@@ -39,8 +36,6 @@ func TestResourceBotDetectionAction(t *testing.T) {
 		})
 	})
 	t.Run("ResourceBotDetectionActionDeletedFromRemoteWithoutCache", func(t *testing.T) {
-		t.Parallel()
-
 		expectedCreateJSON := `{"testKey":"testValue3"}`
 		client := setupMockedBotDetectionActionBotmanClient(true)
 
@@ -61,8 +56,6 @@ func TestResourceBotDetectionAction(t *testing.T) {
 		})
 	})
 	t.Run("ResourceBotDetectionActionDeletedFromRemoteWithCache", func(t *testing.T) {
-		t.Parallel()
-
 		expectedCreateJSON := `{"testKey":"testValue3"}`
 		client := setupMockedBotDetectionActionBotmanClient(true)
 

@@ -1,9 +1,9 @@
 package cloudcertificates
 
 import (
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
-	fwdate "github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/date"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cloudcertificates"
+	fwdate "github.com/akamai/terraform-provider-akamai/v12/pkg/common/framework/date"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	resourceschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -84,21 +84,25 @@ type (
 		SigningTarget       *generationPointerModel `tfsdk:"signing_target"`
 	}
 
+	// activationErrorModel holds a single error recorded against an activation request.
+	activationErrorModel struct {
+		Message types.String `tfsdk:"message"`
+		Type    types.String `tfsdk:"type"`
+	}
+
 	// commonActivationModel holds the activation fields shared by activationDetailModel (used by
 	// `akamai_cloudcertificates_activation_status` and the list items of `akamai_cloudcertificates_activations`)
 	// and networkActivationModel (used by `akamai_cloudcertificates_activation`).
 	commonActivationModel struct {
-		ActivationType          types.String `tfsdk:"activation_type"`
-		ActivationStatus        types.String `tfsdk:"activation_status"`
-		GenerationID            types.Int64  `tfsdk:"generation_id"`
-		ActivationCreatedTime   types.String `tfsdk:"activation_created_time"`
-		ActivationModifiedTime  types.String `tfsdk:"activation_modified_time"`
-		CreatedBy               types.String `tfsdk:"created_by"`
-		ModifiedBy              types.String `tfsdk:"modified_by"`
-		TotalHostnameCount      types.Int64  `tfsdk:"total_hostname_count"`
-		InProgressHostnameCount types.Int64  `tfsdk:"in_progress_hostname_count"`
-		PreEmptedBy             types.Int64  `tfsdk:"pre_empted_by"`
-		ErrorTypes              types.String `tfsdk:"error_types"`
+		ActivationType         types.String           `tfsdk:"activation_type"`
+		ActivationStatus       types.String           `tfsdk:"activation_status"`
+		GenerationID           types.Int64            `tfsdk:"generation_id"`
+		ActivationCreatedTime  types.String           `tfsdk:"activation_created_time"`
+		ActivationModifiedTime types.String           `tfsdk:"activation_modified_time"`
+		CreatedBy              types.String           `tfsdk:"created_by"`
+		ModifiedBy             types.String           `tfsdk:"modified_by"`
+		PreEmptedBy            types.Int64            `tfsdk:"pre_empted_by"`
+		Errors                 []activationErrorModel `tfsdk:"errors"`
 	}
 
 	// activationDetailModel holds the computed detail fields shared by `akamai_cloudcertificates_activation_status`
@@ -554,8 +558,9 @@ func activationDetailAttributes() map[string]schema.Attribute {
 			Description: "The type of the activation operation: `PROMOTE`, `ROLLBACK`, or `REPLACE_STAGING`.",
 		},
 		"activation_status": schema.StringAttribute{
-			Computed:    true,
-			Description: "The status of the activation request: `INIT`, `PENDING`, `IN_PROGRESS`, `COMPLETE`, `PARTIAL_SUCCESS`, `FAILED`, or `ABORTED`.",
+			Computed: true,
+			Description: "The status of the activation request: `INIT`, `PENDING`, `IN_PROGRESS`, `DELAYED`, `COMPLETE`, " +
+				"`PARTIAL_SUCCESS`, `FAILED`, `ABORTED`, or `PRE_EMPTED`.",
 		},
 		"generation_id": schema.Int64Attribute{
 			Computed:    true,
@@ -573,14 +578,6 @@ func activationDetailAttributes() map[string]schema.Attribute {
 			Computed:    true,
 			Description: "The target network for the generation activation: `STAGING` or `PRODUCTION`.",
 		},
-		"total_hostname_count": schema.Int64Attribute{
-			Computed:    true,
-			Description: "The total number of hostnames being deployed as part of this activation, or null if not yet known.",
-		},
-		"in_progress_hostname_count": schema.Int64Attribute{
-			Computed:    true,
-			Description: "The number of hostnames still in progress for this activation, or null if not yet known.",
-		},
 		"pre_empted_by": schema.Int64Attribute{
 			Computed:    true,
 			Description: "The activation request that pre-empted (superseded) this one, or null if this activation was not pre-empted.",
@@ -593,9 +590,21 @@ func activationDetailAttributes() map[string]schema.Attribute {
 			Computed:    true,
 			Description: "The user who last modified the activation request.",
 		},
-		"error_types": schema.StringAttribute{
+		"errors": schema.ListNestedAttribute{
 			Computed:    true,
-			Description: "Error type information when the activation failed, or null otherwise.",
+			Description: "Errors recorded while processing the activation. Empty when there are none.",
+			NestedObject: schema.NestedAttributeObject{
+				Attributes: map[string]schema.Attribute{
+					"message": schema.StringAttribute{
+						Computed:    true,
+						Description: "Error message information when the activation failed.",
+					},
+					"type": schema.StringAttribute{
+						Computed:    true,
+						Description: "Error type information when the activation failed.",
+					},
+				},
+			},
 		},
 	}
 }
@@ -671,18 +680,31 @@ func algorithmResourceAttributes() map[string]resourceschema.Attribute {
 // mapActivationCore maps the activation fields shared by activationDetailModel and networkActivationModel.
 func mapActivationCore(a cloudcertificates.GetActivationStatusResponse) commonActivationModel {
 	return commonActivationModel{
-		ActivationType:          types.StringValue(a.ActivationType),
-		ActivationStatus:        types.StringValue(a.ActivationStatus),
-		GenerationID:            types.Int64Value(a.GenerationID),
-		ActivationCreatedTime:   fwdate.TimeRFC3339Value(a.ActivationCreatedTime),
-		ActivationModifiedTime:  fwdate.TimeRFC3339Value(a.ActivationModifiedTime),
-		CreatedBy:               types.StringValue(a.CreatedBy),
-		ModifiedBy:              types.StringValue(a.ModifiedBy),
-		TotalHostnameCount:      types.Int64PointerValue(a.TotalHostnameCount),
-		InProgressHostnameCount: types.Int64PointerValue(a.InProgressHostnameCount),
-		PreEmptedBy:             types.Int64PointerValue(a.PreEmptedBy),
-		ErrorTypes:              tf.StringValueOrNullIfEmpty(a.ErrorTypes),
+		ActivationType:         types.StringValue(a.ActivationType),
+		ActivationStatus:       types.StringValue(a.ActivationStatus),
+		GenerationID:           types.Int64Value(a.GenerationID),
+		ActivationCreatedTime:  fwdate.TimeRFC3339Value(a.ActivationCreatedTime),
+		ActivationModifiedTime: fwdate.TimeRFC3339Value(a.ActivationModifiedTime),
+		CreatedBy:              types.StringValue(a.CreatedBy),
+		ModifiedBy:             types.StringValue(a.ModifiedBy),
+		PreEmptedBy:            types.Int64PointerValue(a.PreEmptedBy),
+		Errors:                 mapActivationErrors(a.Errors),
 	}
+}
+
+// mapActivationErrors maps the errors recorded for an activation request.
+func mapActivationErrors(errs []cloudcertificates.ActivationError) []activationErrorModel {
+	if len(errs) == 0 {
+		return nil
+	}
+	models := make([]activationErrorModel, len(errs))
+	for i, e := range errs {
+		models[i] = activationErrorModel{
+			Message: types.StringValue(e.Message),
+			Type:    types.StringValue(e.Type),
+		}
+	}
+	return models
 }
 
 // mapActivationDetail maps the computed detail fields of a GetActivationStatusResponse.

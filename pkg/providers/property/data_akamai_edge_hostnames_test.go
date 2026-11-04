@@ -2,13 +2,14 @@ package property
 
 import (
 	"regexp"
+	"slices"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -61,10 +62,10 @@ func TestNewEdgeHostnamesDataSource(t *testing.T) {
 	}
 
 	checker := test.NewStateChecker("data.akamai_edge_hostnames.test").
+		CheckMissing("options").
 		CheckEqual("contract_id", "ctr_123").
 		CheckEqual("group_id", "grp_123").
 		CheckEqual("account_id", "act_123").
-		CheckEqual("options.#", "0").
 		CheckEqual("edge_hostnames.#", "3").
 		CheckEqual("edge_hostnames.0.domain_prefix", "test1").
 		CheckEqual("edge_hostnames.0.domain_suffix", "edgekey.net").
@@ -129,25 +130,93 @@ func TestNewEdgeHostnamesDataSource(t *testing.T) {
 				},
 			},
 		},
-		"happy path - list edge hostnames with options": {
+		"happy path - list edge hostnames with delivery policy": {
 			init: func(m *papi.Mock) {
+				withDeliveryPolicy := defaultEdgeHostnames
+				withDeliveryPolicy.Items = slices.Clone(defaultEdgeHostnames.Items)
+				for i := range withDeliveryPolicy.Items {
+					if i%2 == 0 {
+						withDeliveryPolicy.Items[i].DeliveryPolicy = &papi.DeliveryPolicy{
+							PolicyType: "GEO_OPT_IN",
+							PolicyAttributes: []papi.PolicyAttribute{
+								{
+									AttributeType: "GEO",
+									Code:          "US",
+									Name:          "USA",
+								},
+							},
+						}
+					}
+				}
 				mockGetEdgeHostnames(m, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_123",
 					GroupID:    "grp_123",
-					Options:    []string{"mapDetails"},
 				}, papi.GetEdgeHostnamesResponse{
 					AccountID:     "act_123",
 					ContractID:    "ctr_123",
 					GroupID:       "grp_123",
-					EdgeHostnames: defaultEdgeHostnames,
+					EdgeHostnames: withDeliveryPolicy,
+				}, nil)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/edgehostnames.tf", testDir),
+					Check: checker.
+						CheckEqual("edge_hostnames.#", "3").
+						CheckEqual("edge_hostnames.0.delivery_policy.policy_type", "GEO_OPT_IN").
+						CheckEqual("edge_hostnames.0.delivery_policy.policy_attributes.0.attribute_type", "GEO").
+						CheckEqual("edge_hostnames.0.delivery_policy.policy_attributes.0.code", "US").
+						CheckEqual("edge_hostnames.0.delivery_policy.policy_attributes.0.name", "USA").
+						CheckEqual("edge_hostnames.2.delivery_policy.policy_type", "GEO_OPT_IN").
+						CheckEqual("edge_hostnames.2.delivery_policy.policy_attributes.0.attribute_type", "GEO").
+						CheckEqual("edge_hostnames.2.delivery_policy.policy_attributes.0.code", "US").
+						CheckEqual("edge_hostnames.2.delivery_policy.policy_attributes.0.name", "USA").
+						CheckMissing("edge_hostnames.1.delivery_policy.policy_type").
+						CheckMissing("edge_hostnames.1.delivery_policy.policy_attributes.0.attribute_type").
+						CheckMissing("edge_hostnames.1.delivery_policy.policy_attributes.0.code").
+						CheckMissing("edge_hostnames.1.delivery_policy.policy_attributes.0.name").
+						Build(),
+				},
+			},
+		},
+		"happy path - list edge hostnames with options": {
+			init: func(m *papi.Mock) {
+				withMapDeatails := defaultEdgeHostnames
+				withMapDeatails.Items = slices.Clone(defaultEdgeHostnames.Items)
+				for i := range withMapDeatails.Items {
+					if i%2 == 0 {
+						withMapDeatails.Items[i].MapDetailsSlotNumber = ptr.To(int64(4321 - i))
+					} else {
+						withMapDeatails.Items[i].MapDetailsMapDomain = ptr.To("example.com.edgekey.net")
+						withMapDeatails.Items[i].MapDetailsSerialNumber = ptr.To(int64(1234 + i))
+					}
+				}
+				mockGetEdgeHostnames(m, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_123",
+					GroupID:    "grp_123",
+					Options:    "mapDetails",
+				}, papi.GetEdgeHostnamesResponse{
+					AccountID:     "act_123",
+					ContractID:    "ctr_123",
+					GroupID:       "grp_123",
+					EdgeHostnames: withMapDeatails,
 				}, nil)
 			},
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgehostnames_with_options.tf", testDir),
 					Check: checker.
-						CheckEqual("options.#", "1").
-						CheckEqual("options.0", "mapDetails").
+						CheckEqual("options", "mapDetails").
+						CheckEqual("edge_hostnames.#", "3").
+						CheckEqual("edge_hostnames.0.map_details_slot_number", "4321").
+						CheckMissing("edge_hostnames.0.map_details_serial_number").
+						CheckMissing("edge_hostnames.0.map_details_map_domain").
+						CheckEqual("edge_hostnames.1.map_details_serial_number", "1235").
+						CheckMissing("edge_hostnames.1.map_details_slot_number").
+						CheckEqual("edge_hostnames.1.map_details_map_domain", "example.com.edgekey.net").
+						CheckEqual("edge_hostnames.2.map_details_slot_number", "4319").
+						CheckMissing("edge_hostnames.2.map_details_serial_number").
+						CheckMissing("edge_hostnames.2.map_details_map_domain").
 						Build(),
 				},
 			},

@@ -5,9 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cloudcertificates"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/pagination"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -97,7 +98,22 @@ func (d *activationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		limit = data.Limit.ValueInt64Pointer()
 	}
 
-	activations, err := d.listAllActivations(ctx, data.LineageID.ValueInt64(), limit)
+	client := d.Client.GetCloudCertificates()
+	activations, err := pagination.Collect(ctx, pagination.Options[cloudcertificates.GetActivationStatusResponse, cloudcertificates.ListActivationsResponse]{
+		Limit:    limit,
+		PageSize: cloudcertificates.MaxListActivationsPageSize,
+		Fetch: func(ctx context.Context, cursor string, pageSize int) (*cloudcertificates.ListActivationsResponse, error) {
+			return client.ListActivations(ctx, cloudcertificates.ListActivationsRequest{
+				LineageID: data.LineageID.ValueInt64(),
+				Cursor:    cursor,
+				PageSize:  pageSize,
+			})
+		},
+		Items: func(page *cloudcertificates.ListActivationsResponse) []cloudcertificates.GetActivationStatusResponse {
+			return page.Items
+		},
+		NextCursor: func(page *cloudcertificates.ListActivationsResponse) *string { return page.NextCursor },
+	})
 	if err != nil {
 		if errors.Is(err, cloudcertificates.ErrLineageNotFound) {
 			resp.Diagnostics.AddError("Lineage Not Found", fmt.Sprintf("No certificate lineage found with ID %d", data.LineageID.ValueInt64()))
@@ -109,48 +125,6 @@ func (d *activationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	data.Activations = activationsToModels(activations)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-// listAllActivations follows the API's keyset pagination cursor until the activation history is exhausted or
-// the requested number of records has been collected. Requests use at most 100 records, and the final request
-// is reduced to the remaining limit. A nil limit collects all records.
-func (d *activationsDataSource) listAllActivations(ctx context.Context, lineageID int64, limit *int64) ([]cloudcertificates.GetActivationStatusResponse, error) {
-	client := d.Client.GetCloudCertificates()
-
-	req := cloudcertificates.ListActivationsRequest{
-		LineageID: lineageID,
-		PageSize:  cloudcertificates.MaxListActivationsPageSize,
-	}
-
-	var activations []cloudcertificates.GetActivationStatusResponse
-	for {
-		var remaining int64
-		if limit != nil {
-			remaining = *limit - int64(len(activations))
-			if remaining <= 0 {
-				break
-			}
-			req.PageSize = int(min(remaining, int64(cloudcertificates.MaxListActivationsPageSize)))
-		}
-
-		resp, err := client.ListActivations(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-
-		items := resp.Items
-		if limit != nil && int64(len(items)) > remaining {
-			items = items[:remaining]
-		}
-		activations = append(activations, items...)
-
-		if resp.NextCursor == nil || *resp.NextCursor == "" || *resp.NextCursor == req.Cursor {
-			break
-		}
-		req.Cursor = *resp.NextCursor
-	}
-
-	return activations, nil
 }
 
 func activationsToModels(items []cloudcertificates.GetActivationStatusResponse) []activationModel {

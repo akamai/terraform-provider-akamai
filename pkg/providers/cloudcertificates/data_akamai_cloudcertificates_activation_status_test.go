@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/ptr"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cloudcertificates"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/ptr"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -58,31 +58,28 @@ func TestActivationStatusDataSource(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataActivationStatus/basic.tf"),
 					Check: commonStateChecker.
-						CheckMissing("total_hostname_count").
-						CheckMissing("in_progress_hostname_count").
 						CheckMissing("pre_empted_by").
-						CheckMissing("error_types").
+						CheckEqual("errors.#", "0").
 						Build(),
 				},
 			},
 		},
-		"happy path - activation status with all optional fields set": {
+		"happy path - activation status PARTIAL_SUCCESS": {
 			init: func(m *cloudcertificates.Mock) {
 				m.On("GetActivationStatus", testutils.MockContext, activationStatusReq).Return(&cloudcertificates.GetActivationStatusResponse{
-					ActivationID:            100,
-					LineageID:               500019,
-					ActivationType:          "PROMOTE",
-					ActivationStatus:        "PARTIAL_SUCCESS",
-					GenerationID:            200,
-					ActivationCreatedTime:   time.Date(2026, 7, 22, 12, 47, 55, 0, time.UTC),
-					ActivationModifiedTime:  time.Date(2026, 7, 22, 12, 47, 56, 0, time.UTC),
-					TargetEnvironment:       "STAGING",
-					TotalHostnameCount:      ptr.To(int64(42)),
-					InProgressHostnameCount: ptr.To(int64(5)),
-					PreEmptedBy:             ptr.To(int64(1076)),
-					CreatedBy:               "terraform-dev",
-					ModifiedBy:              "terraform-dev",
-					ErrorTypes:              "/error-types/upstream-activation-error",
+					ActivationID:           100,
+					LineageID:              500019,
+					ActivationType:         "PROMOTE",
+					ActivationStatus:       "PARTIAL_SUCCESS",
+					GenerationID:           200,
+					ActivationCreatedTime:  time.Date(2026, 7, 22, 12, 47, 55, 0, time.UTC),
+					ActivationModifiedTime: time.Date(2026, 7, 22, 12, 47, 56, 0, time.UTC),
+					TargetEnvironment:      "STAGING",
+					CreatedBy:              "terraform-dev",
+					ModifiedBy:             "terraform-dev",
+					Errors: []cloudcertificates.ActivationError{
+						{Type: "UPSTREAM_ERROR", Message: "An upstream service error occurred while processing the activation."},
+					},
 				}, nil).Times(3)
 			},
 			steps: []resource.TestStep{
@@ -90,10 +87,35 @@ func TestActivationStatusDataSource(t *testing.T) {
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataActivationStatus/basic.tf"),
 					Check: commonStateChecker.
 						CheckEqual("activation_status", "PARTIAL_SUCCESS").
-						CheckEqual("total_hostname_count", "42").
-						CheckEqual("in_progress_hostname_count", "5").
+						CheckEqual("errors.#", "1").
+						CheckEqual("errors.0.type", "UPSTREAM_ERROR").
+						CheckEqual("errors.0.message", "An upstream service error occurred while processing the activation.").
+						Build(),
+				},
+			},
+		},
+		"happy path - activation status PRE_EMPTED": {
+			init: func(m *cloudcertificates.Mock) {
+				m.On("GetActivationStatus", testutils.MockContext, activationStatusReq).Return(&cloudcertificates.GetActivationStatusResponse{
+					ActivationID:           100,
+					LineageID:              500019,
+					ActivationType:         "PROMOTE",
+					ActivationStatus:       "PRE_EMPTED",
+					GenerationID:           200,
+					ActivationCreatedTime:  time.Date(2026, 7, 22, 12, 47, 55, 0, time.UTC),
+					ActivationModifiedTime: time.Date(2026, 7, 22, 12, 47, 56, 0, time.UTC),
+					TargetEnvironment:      "STAGING",
+					PreEmptedBy:            ptr.To(int64(1076)),
+					CreatedBy:              "terraform-dev",
+					ModifiedBy:             "terraform-dev",
+				}, nil).Times(3)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataActivationStatus/basic.tf"),
+					Check: commonStateChecker.
+						CheckEqual("activation_status", "PRE_EMPTED").
 						CheckEqual("pre_empted_by", "1076").
-						CheckEqual("error_types", "/error-types/upstream-activation-error").
 						Build(),
 				},
 			},

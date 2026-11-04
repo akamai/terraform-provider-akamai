@@ -12,16 +12,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/retry"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/date"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/retry"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/date"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -456,6 +456,25 @@ func resourcePropertyActivationDelete(config propertyActivationResourceConfig) s
 
 		// Schema guarantees these types
 		acknowledgeRuleWarnings := d.Get("auto_acknowledge_rule_warnings").(bool)
+
+		versionStatus, err := resolveVersionStatus(ctx, meta.Client().GetPAPI(), propertyID, version, network)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		// GetActivations (used by lookupActivation below) returns historical activation
+		// records whose status is not retroactively updated when a version is superseded
+		// by another activation (e.g. an explicit deactivation, or a newer version being
+		// activated, done outside Terraform). If that happens, lookupActivation can still
+		// report the previous activation as ACTIVE even though PAPI no longer considers the
+		// version active on this network. Attempting to deactivate a version that isn't
+		// currently active fails with a 422 that gets endlessly retried until the operation
+		// times out, so use the authoritative GetPropertyVersion status to short-circuit:
+		// only a version that is currently ACTIVE can be deactivated.
+		if versionStatus != papi.VersionStatusActive {
+			d.SetId("")
+			return nil
+		}
 
 		activation, err := lookupActivation(ctx, meta.Client().GetPAPI(), lookupActivationRequest{
 			propertyID: propertyID,

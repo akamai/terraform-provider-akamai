@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/id"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -62,7 +62,7 @@ func resourceReputationProfileActionCreate(ctx context.Context, d *schema.Resour
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionCreate")
 	logger.Debugf("in resourceReputationProfileActionCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -112,7 +112,7 @@ func resourceReputationProfileActionRead(ctx context.Context, d *schema.Resource
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -166,7 +166,7 @@ func resourceReputationProfileActionUpdate(ctx context.Context, d *schema.Resour
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -211,7 +211,7 @@ func resourceReputationProfileActionDelete(ctx context.Context, d *schema.Resour
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}

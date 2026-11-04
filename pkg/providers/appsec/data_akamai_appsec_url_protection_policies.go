@@ -3,8 +3,8 @@ package appsec
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -226,7 +226,7 @@ func (d *urlProtectionPoliciesDataSource) Read(ctx context.Context, req datasour
 	client := d.Client.GetAPPSEC()
 	configID := data.ConfigID.ValueInt64()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), d.Client.GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, configID, d.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version", err.Error())
 		return
@@ -234,7 +234,7 @@ func (d *urlProtectionPoliciesDataSource) Read(ctx context.Context, req datasour
 
 	listURLProtectionPolicyRequest := appsec.ListURLProtectionPoliciesRequest{
 		ConfigID:      configID,
-		ConfigVersion: int64(version),
+		ConfigVersion: version,
 	}
 
 	urlProtectionPolicies, err := client.ListURLProtectionPolicies(ctx, listURLProtectionPolicyRequest)

@@ -3,7 +3,7 @@ package datastream
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/datastream"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,6 +37,8 @@ func TestGetContractIDForStream(t *testing.T) {
 	t.Parallel()
 
 	t.Run("CDN allows omitted contract_id", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"log_type": "CDN",
 			"active":   false,
@@ -48,6 +50,8 @@ func TestGetContractIDForStream(t *testing.T) {
 	})
 
 	t.Run("APPSEC requires contract_id", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"log_type": "APPSEC",
 			"active":   false,
@@ -59,6 +63,8 @@ func TestGetContractIDForStream(t *testing.T) {
 	})
 
 	t.Run("APPSEC rejects whitespace-only contract_id", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"log_type":    "APPSEC",
 			"active":      false,
@@ -76,6 +82,8 @@ func TestGetGroupIDForStream(t *testing.T) {
 	t.Parallel()
 
 	t.Run("CDN allows omitted group_id", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"log_type": "CDN",
 			"active":   false,
@@ -87,6 +95,8 @@ func TestGetGroupIDForStream(t *testing.T) {
 	})
 
 	t.Run("APPSEC requires group_id", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"log_type":    "APPSEC",
 			"active":      false,
@@ -99,6 +109,8 @@ func TestGetGroupIDForStream(t *testing.T) {
 	})
 
 	t.Run("APPSEC rejects group_id zero", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"log_type":    "APPSEC",
 			"active":      false,
@@ -116,30 +128,40 @@ func TestValidateNonCDNContractAndGroupIDValues(t *testing.T) {
 	t.Parallel()
 
 	t.Run("APPSEC requires contract_id", func(t *testing.T) {
+		t.Parallel()
+
 		err := validateNonCDNContractAndGroupIDValues("", "42", datastream.LogTypeAppSec)
 		require.Error(t, err)
 		assert.Equal(t, "`contract_id` is required for log_type \"APPSEC\"", err.Error())
 	})
 
 	t.Run("APPSEC requires group_id at least 1", func(t *testing.T) {
+		t.Parallel()
+
 		err := validateNonCDNContractAndGroupIDValues("test_contract", "0", datastream.LogTypeAppSec)
 		require.Error(t, err)
 		assert.Equal(t, "`group_id` must be at least 1 for log_type \"APPSEC\"", err.Error())
 	})
 
 	t.Run("APPSEC rejects whitespace-only group_id", func(t *testing.T) {
+		t.Parallel()
+
 		err := validateNonCDNContractAndGroupIDValues("test_contract", "   ", datastream.LogTypeAppSec)
 		require.Error(t, err)
 		assert.Equal(t, "`group_id` is required for log_type \"APPSEC\"", err.Error())
 	})
 
 	t.Run("APPSEC rejects invalid group_id", func(t *testing.T) {
+		t.Parallel()
+
 		err := validateNonCDNContractAndGroupIDValues("test_contract", "abc", datastream.LogTypeAppSec)
 		require.Error(t, err)
 		assert.Equal(t, "invalid `group_id` \"abc\": strconv.Atoi: parsing \"abc\": invalid syntax", err.Error())
 	})
 
 	t.Run("APPSEC accepts populated contract_id and group_id", func(t *testing.T) {
+		t.Parallel()
+
 		err := validateNonCDNContractAndGroupIDValues("test_contract", "grp_42", datastream.LogTypeAppSec)
 		require.NoError(t, err)
 	})
@@ -149,28 +171,38 @@ func TestValidateCDNGroupIDWhenSet(t *testing.T) {
 	t.Parallel()
 
 	t.Run("omitted group_id is allowed", func(t *testing.T) {
+		t.Parallel()
+
 		require.NoError(t, validateCDNGroupIDWhenSet(""))
 	})
 
 	t.Run("explicit zero group_id is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		err := validateCDNGroupIDWhenSet("0")
 		require.Error(t, err)
 		assert.Equal(t, "`group_id` must be at least 1 for log_type \"CDN\"", err.Error())
 	})
 
 	t.Run("invalid group_id is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		err := validateCDNGroupIDWhenSet("abc")
 		require.Error(t, err)
 		assert.Equal(t, "invalid `group_id` \"abc\": strconv.Atoi: parsing \"abc\": invalid syntax", err.Error())
 	})
 
 	t.Run("negative group_id is rejected", func(t *testing.T) {
+		t.Parallel()
+
 		err := validateCDNGroupIDWhenSet("-1")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "`group_id` must be at least 1")
 	})
 
 	t.Run("populated group_id is allowed", func(t *testing.T) {
+		t.Parallel()
+
 		require.NoError(t, validateCDNGroupIDWhenSet("grp_42"))
 	})
 }
@@ -217,6 +249,8 @@ func TestResolveContractIDForRead(t *testing.T) {
 	t.Parallel()
 
 	t.Run("prefers API value when present", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"contract_id": "configured_contract",
 		})
@@ -225,6 +259,8 @@ func TestResolveContractIDForRead(t *testing.T) {
 	})
 
 	t.Run("uses API value when config omits contract_id", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"log_type": "CDN",
 		})
@@ -233,6 +269,8 @@ func TestResolveContractIDForRead(t *testing.T) {
 	})
 
 	t.Run("preserves configured value when API omits contractId", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"contract_id": "ctr_configured_contract",
 		})
@@ -241,6 +279,8 @@ func TestResolveContractIDForRead(t *testing.T) {
 	})
 
 	t.Run("preserves ctr_ configured value when API returns empty contractId (I#775)", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"contract_id": "ctr_G-XXXXX",
 		})
@@ -249,6 +289,8 @@ func TestResolveContractIDForRead(t *testing.T) {
 	})
 
 	t.Run("treats whitespace-only API contractId as omitted (I#775)", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"contract_id": "ctr_configured_contract",
 		})
@@ -257,6 +299,8 @@ func TestResolveContractIDForRead(t *testing.T) {
 	})
 
 	t.Run("returns empty when API and config omit contract_id", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"log_type": "CDN",
 		})
@@ -269,6 +313,8 @@ func TestResolveGroupIDForRead(t *testing.T) {
 	t.Parallel()
 
 	t.Run("prefers API value when present", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"group_id": "9999",
 		})
@@ -277,6 +323,8 @@ func TestResolveGroupIDForRead(t *testing.T) {
 	})
 
 	t.Run("uses API value when config omits group_id", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"log_type": "CDN",
 		})
@@ -285,6 +333,8 @@ func TestResolveGroupIDForRead(t *testing.T) {
 	})
 
 	t.Run("does not panic when RawConfig is unavailable during read", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"log_type": "CDN",
 		})
@@ -298,6 +348,8 @@ func TestResolveGroupIDForRead(t *testing.T) {
 	})
 
 	t.Run("preserves configured value when API omits groupId", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"group_id": "grp_1337",
 		})
@@ -306,6 +358,8 @@ func TestResolveGroupIDForRead(t *testing.T) {
 	})
 
 	t.Run("preserves grp_ configured value when API returns 0 (I#775)", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"group_id": "grp_123123123",
 		})
@@ -314,6 +368,8 @@ func TestResolveGroupIDForRead(t *testing.T) {
 	})
 
 	t.Run("preserves numeric string configured value when API returns 0 (I#775)", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"group_id": "123123123",
 		})
@@ -322,6 +378,8 @@ func TestResolveGroupIDForRead(t *testing.T) {
 	})
 
 	t.Run("returns empty when API and config omit group_id", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"log_type": "CDN",
 		})
@@ -330,6 +388,8 @@ func TestResolveGroupIDForRead(t *testing.T) {
 	})
 
 	t.Run("does not preserve explicit zero group_id", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"group_id": "0",
 		})
@@ -338,6 +398,8 @@ func TestResolveGroupIDForRead(t *testing.T) {
 	})
 
 	t.Run("prefers config over stale state zero after I#775 upgrade", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"group_id": "grp_123123123",
 		})
@@ -360,6 +422,8 @@ func TestResolveIntegrationTypeForRead(t *testing.T) {
 	t.Parallel()
 
 	t.Run("prefers API value when present", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"integration_type": "PM_DEPENDENT",
 		})
@@ -370,6 +434,8 @@ func TestResolveIntegrationTypeForRead(t *testing.T) {
 	})
 
 	t.Run("preserves configured value when API omits integration_type", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"integration_type": "PM_DEPENDENT",
 		})
@@ -380,6 +446,8 @@ func TestResolveIntegrationTypeForRead(t *testing.T) {
 	})
 
 	t.Run("preserves DS_MANAGED from state when API omits integration_type (I#775)", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"integration_type": "DS_MANAGED",
 		})
@@ -394,6 +462,8 @@ func TestResolveSamplingPercentageForRead(t *testing.T) {
 	t.Parallel()
 
 	t.Run("prefers API value when present", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"sampling_percentage": 25,
 		})
@@ -404,6 +474,8 @@ func TestResolveSamplingPercentageForRead(t *testing.T) {
 	})
 
 	t.Run("preserves configured value when API omits sampling_percentage", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"sampling_percentage": 25,
 		})

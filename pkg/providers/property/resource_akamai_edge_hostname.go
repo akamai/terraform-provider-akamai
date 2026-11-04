@@ -5,35 +5,30 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/log"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 const (
-	retriesMax                     = 15
 	minDomainPrefixLength          = 1
 	minDomainPrefixLengthAkamaized = 4
 
-	changeRequestStatusPending   = "PENDING"
-	changeRequestStatusSucceeded = "SUCCEEDED"
-	changeRequestStatusFailed    = "FAILED"
-	changeRequestStatusIgnored   = "IGNORED"
-
-	defaultEdgeHostnameTimeout = time.Minute * 45
+	defaultEdgeHostnameTimeout = 3 * time.Hour
 )
 
 var (
@@ -49,8 +44,14 @@ var (
 )
 
 type secureEdgeHostNameResourceConfig struct {
-	// edgeHostnamePollInterval is the interval for polling an edgehostname creation or deletion
+	// edgeHostnamePollInterval is the base interval for polling edge hostname propagation and deletion.
 	edgeHostnamePollInterval time.Duration
+
+	// hapiPropagationPollIntervalThreshold is the elapsed time after which HAPI propagation polling slows down.
+	hapiPropagationPollIntervalThreshold time.Duration
+
+	// hapiPropagationPollIntervalAfterThreshold is the HAPI propagation polling interval after the threshold.
+	hapiPropagationPollIntervalAfterThreshold time.Duration
 
 	// getEdgeHostnamePollInterval is the interval for polling an edgehostname after creation.
 	getEdgeHostnamePollInterval time.Duration
@@ -61,10 +62,19 @@ type secureEdgeHostNameResourceConfig struct {
 
 func defaultSecureEdgeHostNameResourceConfig() secureEdgeHostNameResourceConfig {
 	return secureEdgeHostNameResourceConfig{
-		edgeHostnamePollInterval:    time.Minute,
-		getEdgeHostnamePollInterval: time.Second * 10,
-		edgeHostnameReadTimeout:     time.Minute,
+		edgeHostnamePollInterval:                  time.Minute,
+		hapiPropagationPollIntervalThreshold:      20 * time.Minute,
+		hapiPropagationPollIntervalAfterThreshold: 5 * time.Minute,
+		getEdgeHostnamePollInterval:               time.Second * 10,
+		edgeHostnameReadTimeout:                   time.Minute,
 	}
+}
+
+func (config secureEdgeHostNameResourceConfig) getHAPIPropagationPollInterval(elapsed time.Duration) time.Duration {
+	if elapsed >= config.hapiPropagationPollIntervalThreshold {
+		return config.hapiPropagationPollIntervalAfterThreshold
+	}
+	return config.edgeHostnamePollInterval
 }
 
 func resourceSecureEdgeHostName(config secureEdgeHostNameResourceConfig) *schema.Resource {
@@ -275,6 +285,8 @@ func resourceSecureEdgeHostNameCreate(config secureEdgeHostNameResourceConfig) s
 			groupID:        groupID,
 		}
 
+		d.SetId(hostname.EdgeHostnameID)
+
 		if _, err := waitUntilEdgeHostnameReady(ctx, meta, edgeHostnameKey, config); err != nil {
 			return diag.FromErr(err)
 		}
@@ -284,7 +296,8 @@ func resourceSecureEdgeHostNameCreate(config secureEdgeHostNameResourceConfig) s
 			if err != nil {
 				return diag.FromErr(err)
 			}
-			_, err = waitForHAPIPropagation(ctx, meta.Client().GetHAPI(), edgeHostnameID, config)
+			_, err = waitForHAPICreatePropagation(ctx, meta.Client().GetHAPI(), edgeHostnameID,
+				newHostname, config)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -312,7 +325,6 @@ func resourceSecureEdgeHostNameCreate(config secureEdgeHostNameResourceConfig) s
 			}
 		}
 
-		d.SetId(hostname.EdgeHostnameID)
 		return resourceSecureEdgeHostNameRead(config)(ctx, d, meta)
 	}
 }
@@ -507,7 +519,7 @@ func resourceSecureEdgeHostNameRead(config secureEdgeHostNameResourceConfig) sch
 			if err != nil {
 				return diag.FromErr(err)
 			}
-			hostname, err := meta.Client().GetHAPI().GetEdgeHostname(ctx, edgeHostnameID)
+			hostname, err := meta.Client().GetHAPI().GetEdgeHostname(ctx, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(edgeHostnameID)})
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -681,7 +693,7 @@ Failed to restore previous local schema values. The schema will remain in tainte
 		return diag.FromErr(err)
 	}
 
-	if err = waitForChange(ctx, opts.meta.Client().GetHAPI(), resp.ChangeID); err != nil {
+	if _, err = waitForHAPIChange(ctx, opts.meta.Client().GetHAPI(), opts.edgeHostnameID, resp.ChangeID, opts.config, time.Now()); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil
@@ -689,53 +701,129 @@ Failed to restore previous local schema values. The schema will remain in tainte
 
 func waitForHAPIPropagation(ctx context.Context, hapiClient hapi.HAPI, edgeHostnameID int,
 	config secureEdgeHostNameResourceConfig) (*hapi.GetEdgeHostnameResponse, error) {
-	retries := 0
+	pollingStartTime := time.Now()
 	for {
 		select {
-		case <-time.After(config.edgeHostnamePollInterval):
-			resp, err := hapiClient.GetEdgeHostname(ctx, edgeHostnameID)
+		case <-time.After(config.getHAPIPropagationPollInterval(time.Since(pollingStartTime))):
+			resp, err := hapiClient.GetEdgeHostname(ctx, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(edgeHostnameID)})
 			if resp == nil && err != nil {
-				var target = &hapi.Error{}
+				var target *hapi.Error
 				if !errors.As(err, &target) {
-					return nil, fmt.Errorf("error has unexpected type: %T", err)
+					return nil, fmt.Errorf("get edge hostname %d during HAPI propagation: %w", edgeHostnameID, err)
 				}
-				if target.Status != 200 {
-					retries++
-					if retries > retriesMax {
-						return nil, fmt.Errorf("reached max number of retries: %d", retries-1)
-					}
-					continue
+				if !isRetryableHAPIPropagationStatus(target.Status) {
+					return nil, err
 				}
+				continue
 			}
-
 			return resp, nil
-
 		case <-ctx.Done():
 			return nil, fmt.Errorf("get edge hostname context terminated: %s", ctx.Err())
 		}
 	}
 }
 
-func waitForChange(ctx context.Context, client hapi.HAPI, changeID int) error {
+func waitForHAPICreatePropagation(ctx context.Context, hapiClient hapi.HAPI, edgeHostnameID int,
+	newHostname papi.EdgeHostnameCreate, config secureEdgeHostNameResourceConfig) (*hapi.GetEdgeHostnameResponse, error) {
+	pollingStartTime := time.Now()
 	for {
-		change, err := client.GetChangeRequest(ctx, hapi.GetChangeRequest{
-			ChangeID: changeID,
-		})
-		if err != nil {
-			return err
-		}
-		if change.Status == changeRequestStatusPending {
-			select {
-			case <-time.After(time.Second * 10):
-			case <-ctx.Done():
-				return ctx.Err()
+		select {
+		case <-time.After(config.getHAPIPropagationPollInterval(time.Since(pollingStartTime))):
+			createChangeID, err := findCreateChangeID(ctx, hapiClient, newHostname)
+			if err != nil {
+				return nil, err
 			}
+			if createChangeID != 0 {
+				return waitForHAPIChange(ctx, hapiClient, edgeHostnameID, createChangeID, config, pollingStartTime)
+			}
+			resp, err := hapiClient.GetEdgeHostname(ctx, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(edgeHostnameID)})
+			if resp == nil && err != nil {
+				var target *hapi.Error
+				if !errors.As(err, &target) {
+					return nil, fmt.Errorf("get edge hostname %d during HAPI create propagation: %w", edgeHostnameID, err)
+				}
+				if !isRetryableHAPIPropagationStatus(target.Status) {
+					return nil, err
+				}
+				continue
+			}
+
+			return resp, nil
+		case <-ctx.Done():
+			return nil, fmt.Errorf("get edge hostname context terminated: %s", ctx.Err())
+		}
+	}
+}
+
+func findCreateChangeID(ctx context.Context, client hapi.HAPI, newHostname papi.EdgeHostnameCreate) (int64, error) {
+	changes, err := client.ListChangeRequests(ctx, hapi.ListChangeRequestsRequest{})
+	if err != nil {
+		return 0, err
+	}
+	for _, change := range changes.ChangeRequests {
+		if change.Action != "CREATE" {
 			continue
 		}
-		if change.Status == changeRequestStatusSucceeded {
-			return nil
+		for _, hostname := range change.EdgeHostnames {
+			if hostname.DNSZone == newHostname.DomainSuffix && hostname.RecordName == newHostname.DomainPrefix {
+				return change.ChangeID, nil
+			}
 		}
-		return fmt.Errorf("unexpected change status: %s", change.Status)
+	}
+	return 0, nil
+}
+
+func isRetryableHAPIPropagationStatus(status int64) bool {
+	switch status {
+	case http.StatusNotFound, http.StatusTooManyRequests, http.StatusInternalServerError:
+		return true
+	default:
+		return false
+	}
+}
+
+func waitForHAPIChange(ctx context.Context, client hapi.HAPI, edgeHostnameID int, changeID int64,
+	config secureEdgeHostNameResourceConfig, pollingStartTime time.Time) (*hapi.GetEdgeHostnameResponse, error) {
+	for interval := time.Duration(0); ; interval = config.getHAPIPropagationPollInterval(time.Since(pollingStartTime)) {
+		if ctx.Err() != nil {
+			return nil, fmt.Errorf("get edge hostname context terminated: %w", ctx.Err())
+		}
+		select {
+		case <-ctx.Done():
+			return nil, fmt.Errorf("get edge hostname context terminated: %w", ctx.Err())
+		case <-time.After(interval):
+		}
+
+		change, err := client.GetChangeRequest(ctx, hapi.GetChangeRequestRequest{ChangeID: changeID})
+		if err != nil {
+			return nil, err
+		}
+		optimizationStatus := ""
+		if change.OptimizationStatus != nil {
+			optimizationStatus = *change.OptimizationStatus
+		}
+		if change.Status == hapi.ChangeRequestStatusFailed ||
+			optimizationStatus == hapi.ChangeRequestOptimizationStatusRejected ||
+			optimizationStatus == hapi.ChangeRequestOptimizationStatusRetryFailed ||
+			optimizationStatus == hapi.ChangeRequestOptimizationStatusIgnored {
+			return nil, fmt.Errorf("edge hostname change request %d failed: status %s, optimization status %q: %s",
+				changeID, change.Status, optimizationStatus, change.StatusMessage)
+		}
+		if change.Status != hapi.ChangeRequestStatusSucceeded {
+			continue
+		}
+		if change.OptimizationStatus != nil &&
+			optimizationStatus != hapi.ChangeRequestOptimizationStatusProcessing &&
+			optimizationStatus != hapi.ChangeRequestOptimizationStatusProcessed {
+			continue
+		}
+		response, err := client.GetEdgeHostname(ctx, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(edgeHostnameID)})
+		if err == nil {
+			return response, nil
+		}
+		if optimizationStatus == hapi.ChangeRequestOptimizationStatusProcessed {
+			return nil, err
+		}
 	}
 }
 
@@ -777,22 +865,22 @@ func resourceSecureEdgeHostNameDelete(config secureEdgeHostNameResourceConfig) s
 		for deleteInProgress := true; deleteInProgress; {
 			select {
 			case <-time.After(config.edgeHostnamePollInterval):
-				deleteStatus, err := meta.Client().GetHAPI().GetChangeRequest(ctx, hapi.GetChangeRequest{ChangeID: deleteEdgeHostname.ChangeID})
+				deleteStatus, err := meta.Client().GetHAPI().GetChangeRequest(ctx, hapi.GetChangeRequestRequest{ChangeID: deleteEdgeHostname.ChangeID})
 				if err != nil {
 					return diag.FromErr(err)
 				}
 
 				switch deleteStatus.Status {
-				case changeRequestStatusSucceeded:
+				case hapi.ChangeRequestStatusSucceeded:
 					deleteInProgress = false
 					continue
-				case changeRequestStatusFailed, changeRequestStatusIgnored:
+				case hapi.ChangeRequestStatusFailed, hapi.ChangeRequestStatusIgnored:
 					return diag.Diagnostics{diag.Diagnostic{
 						Severity: diag.Error,
 						Summary:  fmt.Sprintf("edgehostname deletion request got status %s", deleteStatus.Status),
 						Detail:   deleteStatus.StatusMessage,
 					}}
-				case changeRequestStatusPending:
+				case string(hapi.ChangeRequestStatusPending):
 					logger.Debugf("edgehostname %d deletion is not yet ready, waiting for another attempt", edgeHostnameID)
 				}
 			case <-ctx.Done():
@@ -878,7 +966,7 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return nil, err
 	}
-	edgeHostnameResp, err := meta.Client().GetHAPI().GetEdgeHostname(ctx, edgeHostnameID)
+	edgeHostnameResp, err := meta.Client().GetHAPI().GetEdgeHostname(ctx, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(edgeHostnameID)})
 	if err != nil {
 		return nil, fmt.Errorf("error getting edge hostname with id '%d': it may not be ready in HAPI yet: %s", edgeHostnameID, err)
 	}

@@ -11,11 +11,39 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/jsonutil"
-	logger "github.com/akamai/terraform-provider-akamai/v11/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/jsonutil"
+	logger "github.com/akamai/terraform-provider-akamai/v12/pkg/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+// normalizeJSON returns the canonical form of a JSON string: keys sorted
+// alphabetically, insignificant whitespace removed, HTML characters unescaped,
+// and numbers preserved without float64 truncation.
+func normalizeJSON(raw string) (string, error) {
+	var parsed interface{}
+	dec := json.NewDecoder(strings.NewReader(raw))
+	dec.UseNumber() // preserves integer precision; avoids float64 representation
+	if err := dec.Decode(&parsed); err != nil {
+		return "", err
+	}
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(parsed); err != nil {
+		return "", err
+	}
+	return strings.TrimSuffix(buf.String(), "\n"), nil
+}
+
+// marshalNormalize marshals v to JSON and returns its canonical form via normalizeJSON.
+func marshalNormalize(v interface{}) (string, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return "", err
+	}
+	return normalizeJSON(string(b))
+}
 
 func suppressEquivalentJSONDiffsGeneric(_, oldString, newString string, _ *schema.ResourceData) bool {
 	var ob, nb bytes.Buffer
@@ -40,6 +68,17 @@ func suppressRatePolicyDiffs(_, oldString, newString string, _ *schema.ResourceD
 	if err := json.Unmarshal([]byte(newString), &newResp); err != nil {
 		log.Printf("unable to unmarshal new rate policy: %s", err)
 		return false
+	}
+
+	// If the config omits server-assigned fields, treat them as matching state.
+	if newResp.ID == 0 {
+		newResp.ID = oldResp.ID
+	}
+	if newResp.ConfigID == 0 {
+		newResp.ConfigID = oldResp.ConfigID
+	}
+	if newResp.ConfigVersion == 0 {
+		newResp.ConfigVersion = oldResp.ConfigVersion
 	}
 
 	// Set default value if not set, then check if there is a diff

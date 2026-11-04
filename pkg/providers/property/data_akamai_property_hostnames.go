@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -260,6 +260,7 @@ func dataSourcePropertyHostnames() *schema.Resource {
 												"challenge_token": {
 													Type:        schema.TypeString,
 													Computed:    true,
+													Sensitive:   true,
 													Description: "A token you need to copy to the DNS TXT record that validates the domain ownership.",
 												},
 											},

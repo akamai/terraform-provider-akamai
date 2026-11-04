@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +14,7 @@ import (
 func TestAkamaiEvalPenaltyBoxConditions_res_basic(t *testing.T) {
 	t.Parallel()
 	var (
-		configVersion = func(configId int, client *appsec.Mock) appsec.GetConfigurationResponse {
+		configVersion = func(configId int64, client *appsec.Mock) appsec.GetConfigurationResponse {
 			configResponse := appsec.GetConfigurationResponse{}
 			err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
 			require.NoError(t, err)
@@ -27,7 +27,7 @@ func TestAkamaiEvalPenaltyBoxConditions_res_basic(t *testing.T) {
 			return configResponse
 		}
 
-		evalPenaltyBoxConditionsRead = func(configId int, version int, policyId string, client *appsec.Mock, path string) {
+		evalPenaltyBoxConditionsRead = func(configId int64, version int64, policyId string, client *appsec.Mock, path string) {
 			evalPenaltyBoxConditionsResponse := appsec.GetPenaltyBoxConditionsResponse{}
 			err := json.Unmarshal(testutils.LoadFixtureBytes(t, path), &evalPenaltyBoxConditionsResponse)
 			require.NoError(t, err)

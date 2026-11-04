@@ -2,11 +2,10 @@ package akamai
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/subprovider"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 )
 
@@ -30,15 +29,9 @@ func NewTestFrameworkProvider(client edgegrid.Client, subproviders ...subprovide
 	}
 }
 
-// Configure configures provider context at the beginning of the lifecycle
-// based on the values user specified in the provider configuration block
-func (p *TestProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	p.Provider.Configure(ctx, req, resp)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
+// Configure sets a meta.OperationMeta wired to the mock client directly, skipping Provider.Configure entirely -
+// parsing the provider config block and building a real session/client there would only be thrown away here.
+func (p *TestProvider) Configure(_ context.Context, _ provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	if p.client == nil {
 		resp.Diagnostics.AddError(
 			"Client Not Set",
@@ -47,23 +40,8 @@ func (p *TestProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 		return
 	}
 
-	m, ok := resp.DataSourceData.(*meta.OperationMeta)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected resp.DataSourceData to be of type meta.OperationMeta, got %T", resp.DataSourceData),
-		)
-		return
-	}
-	m.SetClient(p.client)
-
-	m, ok = resp.ResourceData.(*meta.OperationMeta)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected resp.ResourceData to be of type meta.OperationMeta, got %T", resp.ResourceData),
-		)
-		return
-	}
-	m.SetClient(p.client)
+	m := meta.NewTestMeta(p.client)
+	resp.DataSourceData = m
+	resp.ResourceData = m
+	resp.ActionData = m
 }

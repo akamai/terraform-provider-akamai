@@ -4,9 +4,9 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -51,14 +51,14 @@ func dataSourceContentProtectionRuleSequenceRead(ctx context.Context, d *schema.
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, int(configID), meta.Client().GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	request := botman.GetContentProtectionRuleSequenceRequest{
 		ConfigID:         configID,
-		Version:          int64(version),
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 	}
 

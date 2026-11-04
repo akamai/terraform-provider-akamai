@@ -4,12 +4,12 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/domainownership"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	tst "github.com/akamai/terraform-provider-akamai/v11/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/domainownership"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	tst "github.com/akamai/terraform-provider-akamai/v12/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -270,6 +270,23 @@ func TestDomainOwnershipDomainsDataSource(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, testDir+"domains.tf"),
 					ExpectError: regexp.MustCompile("oops"),
+				},
+			},
+		},
+		"error - nil page without error": {
+			init: func(m *domainownership.Mock) {
+				m.On("ListDomains", mock.Anything, domainownership.ListDomainsRequest{
+					Paginate: ptr.To(true),
+					Page:     1,
+					PageSize: 1000,
+				}).Return((*domainownership.ListDomainsResponse)(nil), nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, testDir+"domains.tf"),
+					ExpectError: regexp.MustCompile(`(?s)` +
+						regexp.QuoteMeta("Read Domain Ownership Domains failed") + `.*` +
+						regexp.QuoteMeta("received nil page without error")),
 				},
 			},
 		},

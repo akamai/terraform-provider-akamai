@@ -8,13 +8,14 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/text"
-	fwdate "github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/date"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/modifiers"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/validators"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cloudcertificates"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/pagination"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/text"
+	fwdate "github.com/akamai/terraform-provider-akamai/v12/pkg/common/framework/date"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/framework/modifiers"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/framework/validators"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -36,10 +37,11 @@ import (
 )
 
 var (
-	_ resource.Resource                = &lineageResource{}
-	_ resource.ResourceWithConfigure   = &lineageResource{}
-	_ resource.ResourceWithImportState = &lineageResource{}
-	_ resource.ResourceWithModifyPlan  = &lineageResource{}
+	_ resource.Resource                   = &lineageResource{}
+	_ resource.ResourceWithConfigure      = &lineageResource{}
+	_ resource.ResourceWithImportState    = &lineageResource{}
+	_ resource.ResourceWithModifyPlan     = &lineageResource{}
+	_ resource.ResourceWithValidateConfig = &lineageResource{}
 )
 
 // lineageActivationReminderWarningType is the ValidationResults warning CreateLineage always returns on a
@@ -198,11 +200,16 @@ func (r *lineageResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				},
 			},
 			"geo_class": schema.StringAttribute{
-				Optional:    true,
-				Computed:    true,
-				Description: "Geographic traffic class. Defaults to STANDARD_WORLDWIDE if not set.",
+				Optional: true,
+				Computed: true,
+				Description: "Geographic traffic class. Defaults to `STANDARD_WORLDWIDE` if not set. " +
+					"`CONTIGUOUS_US` and `RESERVED_GLOBAL` are only valid when secure_network is `ENHANCED_TLS`.",
 				Validators: []validator.String{
-					stringvalidator.OneOf(string(cloudcertificates.GeoClassStandardWorldwide)),
+					stringvalidator.OneOf(
+						string(cloudcertificates.GeoClassStandardWorldwide),
+						string(cloudcertificates.GeoClassContiguousUS),
+						string(cloudcertificates.GeoClassReservedGlobal),
+					),
 				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -609,9 +616,10 @@ func (r *lineageResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 	}
 
 	name := plan.LineageName.ValueString()
-	existing, err := r.Client.GetCloudCertificates().ListLineages(ctx, cloudcertificates.ListLineagesRequest{
+	_, nameTaken, err := pagination.Find(ctx, lineagesPaginationOptions(r.Client.GetCloudCertificates(), cloudcertificates.ListLineagesRequest{
 		LineageName: name,
-		PageSize:    cloudcertificates.MaxListLineagesPageSize,
+	}, nil), func(lineage cloudcertificates.Lineage) bool {
+		return lineage.LineageName == name
 	})
 	if err != nil {
 		resp.Diagnostics.AddWarning("Lineage Name Conflict Check Skipped",
@@ -619,14 +627,34 @@ func (r *lineageResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 				"Any conflict will still be caught when the change is applied.", name, err.Error()))
 		return
 	}
-	for _, l := range existing.Lineages {
+	if nameTaken {
 		// Uniqueness is enforced server-side with an exact-case match (ListLineages' substring filter is only
 		// for searching), so an exact match here can never be this lineage's own pre-rename name.
-		if l.LineageName == name {
-			resp.Diagnostics.AddAttributeError(path.Root("lineage_name"),
-				"Lineage Name Conflict", fmt.Sprintf("A lineage named %q already exists for this account.", name))
-			return
-		}
+		resp.Diagnostics.AddAttributeError(path.Root("lineage_name"),
+			"Lineage Name Conflict", fmt.Sprintf("A lineage named %q already exists for this account.", name))
+	}
+}
+
+// ValidateConfig requires geo_class values other than STANDARD_WORLDWIDE (CONTIGUOUS_US, RESERVED_GLOBAL) to only
+// be used together with secure_network set to ENHANCED_TLS, mirroring edgegrid-golang's own
+// CreateLineageRequestBody.Validate cross-field check.
+func (r *lineageResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var data lineageResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if !tf.IsKnown(data.GeoClass) || !tf.IsKnown(data.SecureNetwork) {
+		return
+	}
+
+	geoClass := data.GeoClass.ValueString()
+	requiresEnhancedTLS := geoClass == string(cloudcertificates.GeoClassContiguousUS) ||
+		geoClass == string(cloudcertificates.GeoClassReservedGlobal)
+	if requiresEnhancedTLS && data.SecureNetwork.ValueString() != string(cloudcertificates.SecureNetworkEnhancedTLS) {
+		resp.Diagnostics.AddAttributeError(path.Root("geo_class"), "Invalid Geo Class",
+			fmt.Sprintf("geo_class %q is only valid when secure_network is %q.", geoClass, cloudcertificates.SecureNetworkEnhancedTLS))
 	}
 }
 

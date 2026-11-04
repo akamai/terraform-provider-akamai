@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/botman"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/log"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/cache"
-	akameta "github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/botman"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/cache"
+	akameta "github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 )
 
 var (

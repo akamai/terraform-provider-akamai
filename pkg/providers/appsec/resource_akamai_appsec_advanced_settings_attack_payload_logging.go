@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/id"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -65,7 +65,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingImport(ctx context.Context, d *
 		if err != nil {
 			return nil, err
 		}
-		configID, err := strconv.Atoi(iDParts[0])
+		configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 		if err != nil {
 			return nil, err
 		}
@@ -79,7 +79,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingImport(ctx context.Context, d *
 		getAdvancedSettingsAttackPayloadLogging.Version = version
 		getAdvancedSettingsAttackPayloadLogging.PolicyID = policyID
 	} else {
-		configID, err := strconv.Atoi(d.Id())
+		configID, err := strconv.ParseInt(d.Id(), 10, 64)
 		if err != nil {
 			return nil, err
 		}
@@ -105,11 +105,11 @@ func resourceAdvancedSettingsAttackPayloadLoggingImport(ctx context.Context, d *
 	if err := d.Set("security_policy_id", getAdvancedSettingsAttackPayloadLogging.PolicyID); err != nil {
 		return nil, err
 	}
-	jsonBody, err := json.Marshal(settings)
+	normalizedImport, err := marshalNormalize(settings)
 	if err != nil {
 		return nil, err
 	}
-	if err := d.Set("attack_payload_logging", string(jsonBody)); err != nil {
+	if err := d.Set("attack_payload_logging", normalizedImport); err != nil {
 		return nil, err
 	}
 
@@ -123,7 +123,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingCreate(ctx context.Context, d *
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsAttackPayloadLoggingCreate")
 	logger.Debugf("in resourceAdvancedSettingsAttackPayloadLoggingCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -162,7 +162,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingRead(ctx context.Context, d *sc
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsAttackPayloadLoggingRead")
 	logger.Debugf("in resourceAdvancedSettingsLoggingRead")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -191,11 +191,11 @@ func resourceAdvancedSettingsAttackPayloadLoggingRead(ctx context.Context, d *sc
 	if err := d.Set("security_policy_id", policyID); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-	jsonBody, err := json.Marshal(advancedSettingsAttackPayloadLogging)
+	normalized, err := marshalNormalize(advancedSettingsAttackPayloadLogging)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set("attack_payload_logging", string(jsonBody)); err != nil {
+	if err := d.Set("attack_payload_logging", normalized); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
@@ -208,7 +208,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingUpdate(ctx context.Context, d *
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsAttackPayloadLoggingUpdate")
 	logger.Debugf("in resourceAdvancedSettingsAttackPayloadLoggingUpdate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -244,7 +244,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingDelete(ctx context.Context, d *
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsAttackPayloadLoggingDelete")
 	logger.Debugf("in resourceAdvancedSettingsAttackPayloadLoggingDelete")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

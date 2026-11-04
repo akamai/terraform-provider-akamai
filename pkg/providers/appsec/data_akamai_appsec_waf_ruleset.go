@@ -4,8 +4,8 @@ import (
 	"context"
 	"sort"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -127,7 +127,7 @@ func (d *wafRulesetDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	policyID := data.SecurityPolicyID.ValueString()
 
 	// Get the latest version for this configuration
-	version, err := getLatestConfigVersion(ctx, int(configID), d.Client.GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, configID, d.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("retrieving config version", err.Error())
 		return
@@ -136,7 +136,7 @@ func (d *wafRulesetDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	// Call GetWAFCompositeRuleset API to retrieve the complete WAF ruleset
 	getWAFRulesetReq := appsec.GetWAFCompositeRulesetRequest{
 		ConfigID: configID,
-		Version:  int64(version),
+		Version:  version,
 		PolicyID: policyID,
 	}
 

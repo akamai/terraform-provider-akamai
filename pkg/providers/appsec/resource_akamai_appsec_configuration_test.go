@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
@@ -341,9 +341,6 @@ func setCreateConfigurationClone(mock *appsec.Mock, test *testing.T) {
 	mock.On("CreateConfigurationClone",
 		testutils.MockContext,
 		// ie. expect Attributes match to above JSON-File.
-		appsec.CreateConfigurationCloneRequest{Name: "Akamai Tools", Description: "Akamai Tools", ContractID: "C-1FRYVV3", GroupID: 64867, Hostnames: []string{"rinaldi.sandbox.akamaideveloper.com", "sujala.sandbox.akamaideveloper.com"}, CreateFrom: struct {
-			ConfigID int "json:\"configId\""
-			Version  int "json:\"version\""
-		}{43253, 1}},
+		appsec.CreateConfigurationCloneRequest{Name: "Akamai Tools", Description: "Akamai Tools", ContractID: "C-1FRYVV3", GroupID: 64867, Hostnames: []string{"rinaldi.sandbox.akamaideveloper.com", "sujala.sandbox.akamaideveloper.com"}, CreateFrom: appsec.CreateConfigurationCloneCreateFrom{ConfigID: 43253, Version: 1}},
 	).Return(&objClone, nil)
 }

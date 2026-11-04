@@ -5,9 +5,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/datastream"
-	test "github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	test "github.com/akamai/terraform-provider-akamai/v12/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -67,21 +68,19 @@ func TestResourceStreamAnswerXLogTypeValidation(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &datastream.Mock{}
+			client := edgegrid.NewTestClient()
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.tfFile),
-							ExpectError: test.withError,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.tfFile),
+						ExpectError: test.withError,
 					},
-				})
+				},
 			})
 
-			client.AssertExpectations(t)
+			client.DataStream.AssertExpectations(t)
 		})
 	}
 }
@@ -98,29 +97,27 @@ func TestResourceStreamLogTypeValidationUnknownCollectionsPlanOnly(t *testing.T)
 	for name, tfFile := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &datastream.Mock{}
+			client := edgegrid.NewTestClient()
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:             testutils.LoadFixtureString(t, tfFile),
-							PlanOnly:           true,
-							ExpectNonEmptyPlan: true,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:             testutils.LoadFixtureString(t, tfFile),
+						PlanOnly:           true,
+						ExpectNonEmptyPlan: true,
 					},
-				})
+				},
 			})
 
-			client.AssertExpectations(t)
+			client.DataStream.AssertExpectations(t)
 		})
 	}
 }
 
 func TestResourceStreamAnswerXCreateRead(t *testing.T) {
 	t.Parallel()
-	client := &datastream.Mock{}
+	client := edgegrid.NewTestClient()
 
 	streamConfiguration := datastream.StreamConfiguration{
 		DeliveryConfiguration: datastream.DeliveryConfiguration{
@@ -197,7 +194,7 @@ func TestResourceStreamAnswerXCreateRead(t *testing.T) {
 		ModifiedDate:       "01-01-2020 12:00:00 GMT",
 	}
 
-	client.On("CreateStream", testutils.MockContext, createReq).
+	client.DataStream.On("CreateStream", testutils.MockContext, createReq).
 		Return(&datastream.DetailedStreamVersion{
 			StreamID:      streamID,
 			StreamVersion: 1,
@@ -214,14 +211,14 @@ func TestResourceStreamAnswerXCreateRead(t *testing.T) {
 
 	// First batch of GetStream calls return original response
 	// This covers: post-create Read, post-apply plan refresh, pre-update status check
-	client.On("GetStream", testutils.MockContext, getReq).
+	client.DataStream.On("GetStream", testutils.MockContext, getReq).
 		Return(commonGetResp, nil).Times(3)
 
 	// Use the updated response for the pre-update status check, update status polling, post-update Read, and delete status check.
-	client.On("GetStream", testutils.MockContext, getReq).
+	client.DataStream.On("GetStream", testutils.MockContext, getReq).
 		Return(&getRespUpdated, nil).Times(4)
 
-	client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
+	client.DataStream.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 		StreamID: streamID,
 		LogType:  datastream.LogTypeAnswerX,
 	}).Return(nil).Once()
@@ -247,7 +244,7 @@ func TestResourceStreamAnswerXCreateRead(t *testing.T) {
 		LogType:  datastream.LogTypeAnswerX,
 	}
 
-	client.On("UpdateStream", testutils.MockContext, mock.MatchedBy(func(req datastream.UpdateStreamRequest) bool {
+	client.DataStream.On("UpdateStream", testutils.MockContext, mock.MatchedBy(func(req datastream.UpdateStreamRequest) bool {
 		if req.StreamID != streamID || req.Activate != updateStreamRequest.Activate || req.LogType != updateStreamRequest.LogType {
 			return false
 		}
@@ -301,48 +298,46 @@ func TestResourceStreamAnswerXCreateRead(t *testing.T) {
 		NotificationEmails: []string{"updated@akamai.com"},
 	}, nil).Once()
 
-	useClient(client, func() {
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-			Steps: []resource.TestStep{
-				{
-					//Create
-					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/answerx/create_answerx_stream.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						test.NewStateChecker("akamai_datastream.s").
-							CheckEqual("id", strconv.FormatInt(streamID, 10)).
-							CheckEqual("log_type", string(datastream.LogTypeAnswerX)).
-							CheckEqual("active", "false").
-							CheckEqual("properties.#", "0").
-							CheckEqual("app_sec_configs.#", "0").
-							CheckEqual("service_ids.#", "1").
-							CheckEqual("dataset_fields.#", "1").
-							CheckEqual("dataset_fields.0", "2000").
-							Build(),
-						resource.TestCheckTypeSetElemAttr("akamai_datastream.s", "service_ids.*", "101"),
-					),
-				},
-				{
-					//Update
-					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/answerx/update_answerx_stream.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						test.NewStateChecker("akamai_datastream.s").
-							CheckEqual("id", strconv.FormatInt(streamID, 10)).
-							CheckEqual("log_type", string(datastream.LogTypeAnswerX)).
-							CheckEqual("active", "false").
-							CheckEqual("properties.#", "0").
-							CheckEqual("app_sec_configs.#", "0").
-							CheckEqual("service_ids.#", "2").
-							CheckEqual("notification_emails.#", "1").
-							CheckEqual("notification_emails.0", "updated@akamai.com").
-							Build(),
-						resource.TestCheckTypeSetElemAttr("akamai_datastream.s", "service_ids.*", "101"),
-						resource.TestCheckTypeSetElemAttr("akamai_datastream.s", "service_ids.*", "102"),
-					),
-				},
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+		Steps: []resource.TestStep{
+			{
+				//Create
+				Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/answerx/create_answerx_stream.tf"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					test.NewStateChecker("akamai_datastream.s").
+						CheckEqual("id", strconv.FormatInt(streamID, 10)).
+						CheckEqual("log_type", string(datastream.LogTypeAnswerX)).
+						CheckEqual("active", "false").
+						CheckEqual("properties.#", "0").
+						CheckEqual("app_sec_configs.#", "0").
+						CheckEqual("service_ids.#", "1").
+						CheckEqual("dataset_fields.#", "1").
+						CheckEqual("dataset_fields.0", "2000").
+						Build(),
+					resource.TestCheckTypeSetElemAttr("akamai_datastream.s", "service_ids.*", "101"),
+				),
 			},
-		})
+			{
+				//Update
+				Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/answerx/update_answerx_stream.tf"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					test.NewStateChecker("akamai_datastream.s").
+						CheckEqual("id", strconv.FormatInt(streamID, 10)).
+						CheckEqual("log_type", string(datastream.LogTypeAnswerX)).
+						CheckEqual("active", "false").
+						CheckEqual("properties.#", "0").
+						CheckEqual("app_sec_configs.#", "0").
+						CheckEqual("service_ids.#", "2").
+						CheckEqual("notification_emails.#", "1").
+						CheckEqual("notification_emails.0", "updated@akamai.com").
+						Build(),
+					resource.TestCheckTypeSetElemAttr("akamai_datastream.s", "service_ids.*", "101"),
+					resource.TestCheckTypeSetElemAttr("akamai_datastream.s", "service_ids.*", "102"),
+				),
+			},
+		},
 	})
 
-	client.AssertExpectations(t)
+	client.DataStream.AssertExpectations(t)
 }

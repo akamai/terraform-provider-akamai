@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 
-	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/accountprotection"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/accountprotection"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -46,7 +46,7 @@ func readDataSourceProtectedOperations(ctx context.Context, d *schema.ResourceDa
 	logger := meta.Log("accountprotection", "readDataSourceProtectedOperations")
 	logger.Debugf("in readDataSourceProtectedOperations")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -70,15 +70,15 @@ func readDataSourceProtectedOperations(ctx context.Context, d *schema.ResourceDa
 
 	if operationID == "" {
 		request := apr.ListProtectedOperationsRequest{
-			ConfigID:         int64(configID),
-			Version:          int64(version),
+			ConfigID:         configID,
+			Version:          version,
 			SecurityPolicyID: securityPolicyID,
 		}
 		response, err = client.ListProtectedOperations(ctx, request)
 	} else {
 		request := apr.GetProtectedOperationByIDRequest{
-			ConfigID:         int64(configID),
-			Version:          int64(version),
+			ConfigID:         configID,
+			Version:          version,
 			SecurityPolicyID: securityPolicyID,
 			OperationID:      operationID,
 		}

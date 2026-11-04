@@ -6,9 +6,9 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -48,21 +48,23 @@ func dataSourceReputationProfilesRead(ctx context.Context, d *schema.ResourceDat
 
 	getReputationProfiles := appsec.GetReputationProfilesRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	getReputationProfiles.ConfigID = configID
 
-	if getReputationProfiles.ConfigVersion, err = getLatestConfigVersion(ctx, configID, client); err != nil {
+	version, err := getLatestConfigVersion(ctx, configID, client)
+	if err != nil {
 		return diag.FromErr(err)
 	}
+	getReputationProfiles.ConfigVersion = version
 
-	reputationProfileID, err := tf.GetIntValue("reputation_profile_id", d)
+	reputationProfileID, err := tf.GetIntValueAsInt64("reputation_profile_id", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	getReputationProfiles.ReputationProfileId = reputationProfileID
+	getReputationProfiles.ReputationProfileID = reputationProfileID
 
 	reputationprofiles, err := client.GetReputationProfiles(ctx, getReputationProfiles)
 	if err != nil {
@@ -90,7 +92,7 @@ func dataSourceReputationProfilesRead(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 
 	return nil
 }

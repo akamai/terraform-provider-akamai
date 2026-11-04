@@ -8,9 +8,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/mock"
@@ -391,7 +391,7 @@ func mockUpdatePolicyProtectionsFailure(client *appsec.Mock, times int) {
 		Return(nil, &serverError).Times(times)
 }
 
-func mockGetPolicyProtections(client *appsec.Mock, configID int, version int, policyID string, resp *appsec.PolicyProtectionsResponse, times int) {
+func mockGetPolicyProtections(client *appsec.Mock, configID int64, version int64, policyID string, resp *appsec.PolicyProtectionsResponse, times int) {
 	client.On("GetPolicyProtections", mock.Anything, appsec.GetPolicyProtectionsRequest{
 		ConfigID: configID,
 		Version:  version,
@@ -399,7 +399,7 @@ func mockGetPolicyProtections(client *appsec.Mock, configID int, version int, po
 	}).Return(resp, nil).Times(times)
 }
 
-func mockGetPolicyProtectionsFailure(client *appsec.Mock, policyID string, configID, version, times int) {
+func mockGetPolicyProtectionsFailure(client *appsec.Mock, policyID string, configID, version int64, times int) {
 	client.On("GetPolicyProtections", mock.Anything, appsec.GetPolicyProtectionsRequest{
 		ConfigID: configID,
 		Version:  version,

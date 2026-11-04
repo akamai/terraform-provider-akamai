@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -630,6 +630,7 @@ func (p *mockProperty) mockCreateActivation() *mock.Call {
 }
 
 func (p *mockProperty) mockResourceActivationDelete() {
+	p.mockGetPropertyVersionForDelete()
 	p.mockGetActivations()
 
 	activation := papi.Activation{
@@ -657,6 +658,35 @@ func (p *mockProperty) mockResourceActivationDelete() {
 
 	p.papiMock.On("CreateActivation", testutils.MockContext, req).Return(&resp, nil).Once()
 	p.mockGetActivation()
+}
+
+// mockGetPropertyVersionForDelete mocks the GetPropertyVersion call used by resourcePropertyActivationDelete
+// to confirm the version being deleted is still active on the relevant network before issuing a deactivation.
+// resolveVersionStatus only sets PropertyID and PropertyVersion on the request (no ContractID/GroupID).
+func (p *mockProperty) mockGetPropertyVersionForDelete() *mock.Call {
+	req := papi.GetPropertyVersionRequest{
+		PropertyID:      p.propertyID,
+		PropertyVersion: p.activationForCreate.PropertyVersion,
+	}
+
+	ver := papi.PropertyVersionGetItem{
+		PropertyVersion: p.activationForCreate.PropertyVersion,
+		ProductID:       p.productID,
+	}
+	if p.activationForCreate.Network == papi.ActivationNetworkProduction {
+		ver.ProductionStatus = papi.VersionStatusActive
+	} else {
+		ver.StagingStatus = papi.VersionStatusActive
+	}
+
+	resp := &papi.GetPropertyVersionsResponse{
+		PropertyID:   p.propertyID,
+		PropertyName: p.propertyName,
+		GroupID:      p.groupID,
+		ContractID:   p.contractID,
+		Version:      ver,
+	}
+	return p.papiMock.On("GetPropertyVersion", testutils.MockContext, req).Return(resp, nil).Once()
 }
 
 func (p *mockProperty) mockGetActivation() *mock.Call {

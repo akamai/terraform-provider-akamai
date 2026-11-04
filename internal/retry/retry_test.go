@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/ptr"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/ptr"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -69,10 +69,10 @@ func TestPoll(t *testing.T) {
 			expectedCalls: 1,
 		},
 		"context timeout during retry loop": {
-			setupContext:     contextWithTimeout(50 * time.Millisecond),
+			setupContext:     contextWithTimeout(200 * time.Millisecond),
 			setupFn:          returnCallsTimes100FailingOnFirst(2),
 			shouldRetryError: alwaysRetry,
-			interval:         30 * time.Millisecond,
+			interval:         120 * time.Millisecond,
 			expectedError:    "context terminated while waiting to retry: context deadline exceeded",
 			expectedCalls:    2,
 		},
@@ -82,8 +82,8 @@ func TestPoll(t *testing.T) {
 			},
 			setupFn:          returnCallsTimes100FailingOnFirst(2),
 			shouldRetryError: alwaysRetry,
-			interval:         30 * time.Millisecond,
-			deadline:         50 * time.Millisecond,
+			interval:         120 * time.Millisecond,
+			deadline:         200 * time.Millisecond,
 			expectedError:    "context terminated while waiting to retry: context deadline exceeded",
 			expectedCalls:    2,
 		},

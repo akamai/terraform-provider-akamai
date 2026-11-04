@@ -5,8 +5,9 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/datastream"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -76,28 +77,27 @@ func TestResourceStreamLogTypeValidation(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &datastream.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.tfFile),
-							ExpectError: test.withError,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.tfFile),
+						ExpectError: test.withError,
 					},
-				})
+				},
 			})
 
-			client.AssertExpectations(t)
+			client.DataStream.AssertExpectations(t)
 		})
 	}
 }
 
 func TestResourceStreamAppSecCreateRead(t *testing.T) {
 	t.Parallel()
-	client := &datastream.Mock{}
+	client := edgegrid.NewTestClient()
 
 	streamConfiguration := datastream.StreamConfiguration{
 		DeliveryConfiguration: datastream.DeliveryConfiguration{
@@ -138,14 +138,14 @@ func TestResourceStreamAppSecCreateRead(t *testing.T) {
 		LogType:  datastream.LogTypeAppSec,
 	}
 
-	client.On("CreateStream", testutils.MockContext, createReq).
+	client.DataStream.On("CreateStream", testutils.MockContext, createReq).
 		Return(&datastream.DetailedStreamVersion{
 			StreamID:      streamID,
 			StreamVersion: 1,
 			GroupID:       streamConfiguration.GroupID,
 		}, nil).Once()
 
-	client.On("GetStream", testutils.MockContext, getReq).
+	client.DataStream.On("GetStream", testutils.MockContext, getReq).
 		Return(&datastream.DetailedStreamVersion{
 			LogType:               getReq.LogType,
 			StreamStatus:          datastream.StreamStatusInactive,
@@ -175,7 +175,7 @@ func TestResourceStreamAppSecCreateRead(t *testing.T) {
 		}, nil).Times(3)
 
 	// for after the update step, where we expect the same GetStream call with the same response but with the updated email.
-	client.On("GetStream", testutils.MockContext, getReq).
+	client.DataStream.On("GetStream", testutils.MockContext, getReq).
 		Return(&datastream.DetailedStreamVersion{
 			LogType:               getReq.LogType,
 			StreamStatus:          datastream.StreamStatusInactive,
@@ -204,7 +204,7 @@ func TestResourceStreamAppSecCreateRead(t *testing.T) {
 			NotificationEmails: []string{"updated@akamai.com"},
 		}, nil)
 
-	client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
+	client.DataStream.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 		StreamID: streamID,
 		LogType:  datastream.LogTypeAppSec,
 	}).Return(' ', nil).Once()
@@ -218,7 +218,7 @@ func TestResourceStreamAppSecCreateRead(t *testing.T) {
 	updateStreamRequest.StreamConfiguration.NotificationEmails = []string{"updated@akamai.com"}
 	updateStreamRequest.StreamConfiguration.GroupID = 0 // group ID does not get sent for an update.
 
-	client.On("UpdateStream", testutils.MockContext, updateStreamRequest).Return(&datastream.DetailedStreamVersion{
+	client.DataStream.On("UpdateStream", testutils.MockContext, updateStreamRequest).Return(&datastream.DetailedStreamVersion{
 		LogType:               getReq.LogType,
 		StreamStatus:          datastream.StreamStatusInactive,
 		DeliveryConfiguration: streamConfiguration.DeliveryConfiguration,
@@ -246,39 +246,37 @@ func TestResourceStreamAppSecCreateRead(t *testing.T) {
 		NotificationEmails: []string{"updated@akamai.com"},
 	}, nil).Once()
 
-	useClient(client, func() {
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-			Steps: []resource.TestStep{
-				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/appsec/create_app_sec_stream.tf"),
-					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_datastream.s", "id", strconv.FormatInt(streamID, 10)),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "log_type", string(datastream.LogTypeAppSec)),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "active", "false"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "properties.#", "0"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "app_sec_configs.#", "1"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "app_sec_configs.0", "16536"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "42"),
-					),
-				},
-				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/appsec/update_app_sec_stream.tf"),
-					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_datastream.s", "id", strconv.FormatInt(streamID, 10)),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "log_type", string(datastream.LogTypeAppSec)),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "active", "false"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "properties.#", "0"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "app_sec_configs.#", "1"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "app_sec_configs.0", "16536"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "notification_emails.#", "1"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "notification_emails.0", "updated@akamai.com"),
-					),
-				},
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+		Steps: []resource.TestStep{
+			{
+				Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/appsec/create_app_sec_stream.tf"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("akamai_datastream.s", "id", strconv.FormatInt(streamID, 10)),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "log_type", string(datastream.LogTypeAppSec)),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "active", "false"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "properties.#", "0"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "app_sec_configs.#", "1"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "app_sec_configs.0", "16536"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "42"),
+				),
 			},
-		})
-
-		client.AssertExpectations(t)
+			{
+				Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/appsec/update_app_sec_stream.tf"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("akamai_datastream.s", "id", strconv.FormatInt(streamID, 10)),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "log_type", string(datastream.LogTypeAppSec)),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "active", "false"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "properties.#", "0"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "app_sec_configs.#", "1"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "app_sec_configs.0", "16536"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "notification_emails.#", "1"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "notification_emails.0", "updated@akamai.com"),
+				),
+			},
+		},
 	})
+
+	client.DataStream.AssertExpectations(t)
 }

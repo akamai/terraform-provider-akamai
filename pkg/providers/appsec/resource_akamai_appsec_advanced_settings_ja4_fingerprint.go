@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -48,7 +48,7 @@ func resourceAdvancedSettingsJA4FingerprintCreate(ctx context.Context, d *schema
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsJA4FingerprintCreate")
 	logger.Debugf("in resourceAdvancedSettingsJA4FingerprintCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -86,7 +86,7 @@ func resourceAdvancedSettingsJA4FingerprintRead(ctx context.Context, d *schema.R
 
 	getAdvancedSettingsJA4Fingerprint := appsec.GetAdvancedSettingsJA4FingerprintRequest{}
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -120,7 +120,7 @@ func resourceAdvancedSettingsJA4FingerprintUpdate(ctx context.Context, d *schema
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsJA4FingerprintUpdate")
 	logger.Debugf("in resourceAdvancedSettingsJA4FingerprintUpdate")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -156,7 +156,7 @@ func resourceAdvancedSettingsJA4FingerprintDelete(ctx context.Context, d *schema
 
 	removeAdvancedSettingsJA4Fingerprint := appsec.RemoveAdvancedSettingsJA4FingerprintRequest{}
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}

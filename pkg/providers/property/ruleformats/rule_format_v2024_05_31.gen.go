@@ -1020,6 +1020,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 								},
 								"g2o_token": {
 									Optional:    true,
+									Sensitive:   true,
 									Description: "",
 									Type:        schema.TypeString,
 								},
@@ -1148,6 +1149,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 					"stickiness_cookie_salt": {
 						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
+						Sensitive:        true,
 						Description:      "Specifies the stickiness cookie's salt value. Use this option to share the cookie across many properties.",
 						Type:             schema.TypeString,
 					},
@@ -1180,6 +1182,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 								},
 								"g2o_token": {
 									Optional:    true,
+									Sensitive:   true,
 									Description: "",
 									Type:        schema.TypeString,
 								},
@@ -1392,6 +1395,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 					"population_cookie_salt": {
 						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
+						Sensitive:        true,
 						Description:      "Specifies the cookie's salt value. Use this option to share the cookie across many properties.",
 						Type:             schema.TypeString,
 					},
@@ -3564,6 +3568,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 					},
 					"hash_conversion_key": {
 						Optional:    true,
+						Sensitive:   true,
 						Description: "Specifies the key to generate the hash, ideally a long random string to ensure adequate security.",
 						Type:        schema.TypeString,
 					},
@@ -5540,6 +5545,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 								},
 								"g2o_token": {
 									Optional:    true,
+									Sensitive:   true,
 									Description: "",
 									Type:        schema.TypeString,
 								},
@@ -6004,6 +6010,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 					"secret_key": {
 						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9a-zA-Z]+$")),
 						Optional:         true,
+						Sensitive:        true,
 						Description:      "Specifies the shared secret key.",
 						Type:             schema.TypeString,
 					},
@@ -7527,6 +7534,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 					"api_key": {
 						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^$|^[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}-[a-zA-Z2-9]{5}$")),
 						Optional:         true,
+						Sensitive:        true,
 						Description:      "This generated value uniquely identifies sections of your website for you to analyze independently. To access this value, see `Enable mPulse in Property Manager`.",
 						Type:             schema.TypeString,
 					},
@@ -7613,12 +7621,14 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 					"hls_query_param_secret_key": {
 						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]+$")),
 						Optional:         true,
+						Sensitive:        true,
 						Description:      "Specifies a primary key as a token to accompany the request.",
 						Type:             schema.TypeString,
 					},
 					"hls_query_param_transition_key": {
 						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]+$")),
 						Optional:         true,
+						Sensitive:        true,
 						Description:      "Specifies a transition key as a token to accompany the request.",
 						Type:             schema.TypeString,
 					},
@@ -8640,6 +8650,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 								},
 								"g2o_token": {
 									Optional:    true,
+									Sensitive:   true,
 									Description: "",
 									Type:        schema.TypeString,
 								},
@@ -9874,6 +9885,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 					"secret_key": {
 						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9a-zA-Z]{10,}$")),
 						Optional:         true,
+						Sensitive:        true,
 						Description:      "Specifies the shared secret key.",
 						Type:             schema.TypeString,
 					},
@@ -9914,6 +9926,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 					"gcs_hmac_key_secret": {
 						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9+/=_-]{1,40}$"),
 						Optional:         true,
+						Sensitive:        true,
 						Description:      "Specifies the secret linked to the access ID that you want to use to sign requests to Google Cloud Storage.",
 						Type:             schema.TypeString,
 					},
@@ -9931,6 +9944,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 					"aws_secret_access_key": {
 						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9+/=_-]{1,1024}$"),
 						Optional:         true,
+						Sensitive:        true,
 						Description:      "Specifies the secret linked to the access key identifier that you want to use to sign requests to AWS.",
 						Type:             schema.TypeString,
 					},
@@ -11564,6 +11578,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 								},
 								"g2o_token": {
 									Optional:    true,
+									Sensitive:   true,
 									Description: "",
 									Type:        schema.TypeString,
 								},
@@ -12463,6 +12478,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 					"key": {
 						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]+$"),
 						Optional:         true,
+						Sensitive:        true,
 						Description:      "Specifies the encryption key to use as a shared secret to validate tokens.",
 						Type:             schema.TypeString,
 					},
@@ -12474,6 +12490,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 					"transition_key": {
 						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]+$")),
 						Optional:         true,
+						Sensitive:        true,
 						Description:      "An alternate encryption key to match along with the `key` field, allowing you to rotate keys with no down time.",
 						Type:             schema.TypeString,
 					},
@@ -12799,6 +12816,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 					"encryption_key": {
 						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]+$"),
 						Optional:         true,
+						Sensitive:        true,
 						Description:      "Specifies the encryption hex key. For `ALG_3DES` it needs to be 48 characters long, 32 characters for `ALG_AES128`, and 64 characters for `ALG_AES256`.",
 						Type:             schema.TypeString,
 					},
@@ -12851,6 +12869,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 					},
 					"hmac_key": {
 						Optional:    true,
+						Sensitive:   true,
 						Description: "Specifies the secret to use in generating the base64-encoded digest.",
 						Type:        schema.TypeString,
 					},
@@ -13996,12 +14015,14 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 					"key": {
 						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]+$"),
 						Optional:         true,
+						Sensitive:        true,
 						Description:      "The shared secret used to validate tokens, which needs to match the key used in the token generation code.",
 						Type:             schema.TypeString,
 					},
 					"transition_key": {
 						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]+$")),
 						Optional:         true,
+						Sensitive:        true,
 						Description:      "Specifies a transition key as a hex value.",
 						Type:             schema.TypeString,
 					},
@@ -14257,6 +14278,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 					"allowed_user_cookie_salt": {
 						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
+						Sensitive:        true,
 						Description:      "Specifies a fixed `salt` value, which is incorporated into the cookie's value to prevent users from manipulating it. You can use the same salt string across different behaviors or properties to apply a single cookie to all allowed users.",
 						Type:             schema.TypeString,
 					},
@@ -14317,6 +14339,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 					"waiting_room_cookie_salt": {
 						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
+						Sensitive:        true,
 						Description:      "Specifies a fixed `salt` value, which is incorporated into the cookie's value to prevent users from manipulating it. You can use the same salt string across different behaviors or properties to apply a single cookie for the waiting room session.",
 						Type:             schema.TypeString,
 					},
@@ -14435,6 +14458,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 								},
 								"g2o_token": {
 									Optional:    true,
+									Sensitive:   true,
 									Description: "",
 									Type:        schema.TypeString,
 								},
@@ -14634,6 +14658,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 					},
 					"decryption_password1": {
 						Optional:    true,
+						Sensitive:   true,
 						Description: "Provides the primary password used to encrypt patterns in your watermarking tokens.",
 						Type:        schema.TypeString,
 					},
@@ -14644,6 +14669,7 @@ func getBehaviorsSchemaV20240531() map[string]*schema.Schema {
 					},
 					"decryption_password2": {
 						Optional:    true,
+						Sensitive:   true,
 						Description: "Provides the secondary password you can use to rotate passwords.",
 						Type:        schema.TypeString,
 					},

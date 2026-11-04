@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/id"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -59,7 +59,7 @@ func resourceReputationProfileCreate(ctx context.Context, d *schema.ResourceData
 	logger := meta.Log("APPSEC", "resourceReputationProfileCreate")
 	logger.Debug("in resourceReputationProfileCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -67,6 +67,9 @@ func resourceReputationProfileCreate(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	defer invalidateReputationProfileCache(configID, version, logger)
+
 	jsonpostpayload, err := tf.GetStringValue("reputation_profile", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -88,6 +91,8 @@ func resourceReputationProfileCreate(ctx context.Context, d *schema.ResourceData
 
 	d.SetId(fmt.Sprintf("%d:%d", createReputationProfile.ConfigID, response.ID))
 
+	// Drop the cached list before reading back, otherwise the read would not see the new profile.
+	invalidateReputationProfileCache(configID, version, logger)
 	return resourceReputationProfileRead(ctx, d, m)
 }
 
@@ -102,11 +107,11 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	reputationProfileID, err := strconv.Atoi(iDParts[1])
+	reputationProfileID, err := strconv.ParseInt(iDParts[1], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -116,12 +121,9 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	reputationProfileRequest := appsec.GetReputationProfileRequest{
-		ConfigID:            configID,
-		ConfigVersion:       version,
-		ReputationProfileId: reputationProfileID,
-	}
-	reputationProfileResponse, err := client.GetReputationProfile(ctx, reputationProfileRequest)
+	// Use cache helper: fetches all reputation profiles in one API call on first read,
+	// then filters locally; subsequent reads for the same configID+version hit cache.
+	reputationProfileResponse, err := getReputationProfile(ctx, configID, version, reputationProfileID, m)
 	if err != nil {
 		logger.Errorf("calling 'getReputationProfile': %s", err.Error())
 		return diag.FromErr(err)
@@ -133,11 +135,11 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 	if err := d.Set("reputation_profile_id", reputationProfileID); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-	jsonBody, err := json.Marshal(reputationProfileResponse)
+	normalized, err := marshalNormalize(reputationProfileResponse)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set("reputation_profile", string(jsonBody)); err != nil {
+	if err := d.Set("reputation_profile", normalized); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
@@ -155,11 +157,11 @@ func resourceReputationProfileUpdate(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	reputationProfileID, err := strconv.Atoi(iDParts[1])
+	reputationProfileID, err := strconv.ParseInt(iDParts[1], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -171,16 +173,19 @@ func resourceReputationProfileUpdate(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	jsonPayloadRaw := []byte(jsonpostpayload)
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
 	updateReputationProfile := appsec.UpdateReputationProfileRequest{
 		ConfigID:            configID,
 		ConfigVersion:       version,
-		ReputationProfileId: reputationProfileID,
+		ReputationProfileID: reputationProfileID,
 		JsonPayloadRaw:      rawJSON,
 	}
 
+	// Invalidate before the Read below, otherwise it would be served the stale cached list.
+	invalidateReputationProfileCache(configID, version, logger)
 	_, err = client.UpdateReputationProfile(ctx, updateReputationProfile)
 	if err != nil {
 		logger.Errorf("calling 'updateReputationProfile': %s", err.Error())
@@ -201,7 +206,7 @@ func resourceReputationProfileDelete(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -209,15 +214,18 @@ func resourceReputationProfileDelete(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	reputationProfileID, err := strconv.Atoi(iDParts[1])
+
+	reputationProfileID, err := strconv.ParseInt(iDParts[1], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
+	defer invalidateReputationProfileCache(configID, version, logger)
+
 	deleteReputationProfile := appsec.RemoveReputationProfileRequest{
 		ConfigID:            configID,
 		ConfigVersion:       version,
-		ReputationProfileId: reputationProfileID,
+		ReputationProfileID: reputationProfileID,
 	}
 
 	_, err = client.RemoveReputationProfile(ctx, deleteReputationProfile)

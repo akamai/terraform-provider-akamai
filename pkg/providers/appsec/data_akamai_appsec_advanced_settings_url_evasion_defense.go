@@ -3,8 +3,8 @@ package appsec
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -178,7 +178,7 @@ func (d *urlEvasionDefenseDataSource) Read(ctx context.Context, req datasource.R
 
 	configID := data.ConfigID.ValueInt64()
 	client := d.Client.GetAPPSEC()
-	version, err := getLatestConfigVersion(ctx, int(configID), client)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version", err.Error())
 		return
@@ -186,7 +186,7 @@ func (d *urlEvasionDefenseDataSource) Read(ctx context.Context, req datasource.R
 
 	getRequest := appsec.GetAdvancedSettingsURLEvasionDefenseRequest{
 		ConfigID: configID,
-		Version:  int64(version),
+		Version:  version,
 	}
 
 	result, err := client.GetAdvancedSettingsURLEvasionDefense(ctx, getRequest)

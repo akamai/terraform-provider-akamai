@@ -8,15 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
-	"github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/terraform-plugin-framework/action"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
@@ -55,45 +50,12 @@ type invokeTestCase struct {
 func newTestForceCertificateRenewalActionWithInterval(t *testing.T, pollInterval time.Duration) (*ForceCertificateRenewalAction, *edgegrid.TestClient) {
 	t.Helper()
 
-	client := edgegrid.NewTestClient()
-	m, err := meta.New(session.Must(session.New()), hclog.NewNullLogger(), "test")
-	require.NoError(t, err)
-	m.SetClient(client)
-
 	a := &ForceCertificateRenewalAction{
 		pollChangeStatusInterval: pollInterval,
 	}
-	configureResp := &action.ConfigureResponse{}
-	a.Configure(context.Background(), action.ConfigureRequest{ProviderData: m}, configureResp)
-	assert.False(t, configureResp.Diagnostics.HasError())
+	client := testutils.ConfigureTestAction(t, a)
 
 	return a, client
-}
-
-// invokeForceCertificateRenewalWithContext builds the action config from raw tftypes values, invokes the action
-// with the given context, and returns the collected progress messages alongside the response.
-func invokeForceCertificateRenewalWithContext(ctx context.Context, t *testing.T, a *ForceCertificateRenewalAction, enrollmentID int64, cancelPendingChanges, acknowledgePreVerificationWarnings *bool) (*action.InvokeResponse, []string) {
-	t.Helper()
-
-	schemaResp := &action.SchemaResponse{}
-	a.Schema(ctx, action.SchemaRequest{}, schemaResp)
-	assert.False(t, schemaResp.Diagnostics.HasError())
-	objectType := schemaResp.Schema.Type().TerraformType(ctx).(tftypes.Object)
-
-	raw := tftypes.NewValue(objectType, map[string]tftypes.Value{
-		"enrollment_id":                         tftypes.NewValue(tftypes.Number, enrollmentID),
-		"cancel_pending_changes":                tftypes.NewValue(tftypes.Bool, cancelPendingChanges),
-		"acknowledge_pre_verification_warnings": tftypes.NewValue(tftypes.Bool, acknowledgePreVerificationWarnings),
-	})
-
-	progress := []string{}
-	resp := &action.InvokeResponse{
-		SendProgress: func(e action.InvokeProgressEvent) {
-			progress = append(progress, e.Message)
-		},
-	}
-	a.Invoke(ctx, action.InvokeRequest{Config: tfsdk.Config{Schema: schemaResp.Schema, Raw: raw}}, resp)
-	return resp, progress
 }
 
 func testDVEnrollment() *cps.GetEnrollmentResponse {
@@ -588,8 +550,11 @@ func TestForceCertificateRenewalActionUnitTests(t *testing.T) {
 					t.Cleanup(cancel)
 				}
 
-				resp, progress := invokeForceCertificateRenewalWithContext(ctx, t, a,
-					tc.input.enrollmentID, tc.input.cancelPendingChanges, tc.input.acknowledgePreVerificationWarnings)
+				resp, progress := testutils.InvokeTestAction(ctx, t, a, map[string]tftypes.Value{
+					"enrollment_id":                         tftypes.NewValue(tftypes.Number, tc.input.enrollmentID),
+					"cancel_pending_changes":                tftypes.NewValue(tftypes.Bool, tc.input.cancelPendingChanges),
+					"acknowledge_pre_verification_warnings": tftypes.NewValue(tftypes.Bool, tc.input.acknowledgePreVerificationWarnings),
+				})
 
 				if tc.expected.errorSummary != "" {
 					require.Len(t, resp.Diagnostics.Errors(), 1)
@@ -609,11 +574,7 @@ func TestForceCertificateRenewalActionUnitTests(t *testing.T) {
 					assert.Empty(t, resp.Diagnostics.Warnings())
 				}
 
-				if len(tc.expected.progress) == 0 {
-					assert.Empty(t, progress)
-				} else {
-					assert.Equal(t, tc.expected.progress, progress)
-				}
+				testutils.AssertActionProgress(t, tc.expected.progress, progress)
 
 				client.CPS.AssertExpectations(t)
 			})

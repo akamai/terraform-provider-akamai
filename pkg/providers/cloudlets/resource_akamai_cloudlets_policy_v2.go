@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudlets"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -148,6 +148,28 @@ func (strategy v2PolicyStrategy) readPolicy(ctx context.Context, policyID int64,
 
 	attrs["description"] = policyVersion.Description
 	attrs["match_rule_format"] = policyVersion.MatchRuleFormat
+	for _, rule := range policyVersion.MatchRules {
+		switch r := rule.(type) {
+		case *cloudlets.MatchRuleALB:
+			r.AkaRuleID, r.Location = "", ""
+		case *cloudlets.MatchRuleAP:
+			r.AkaRuleID, r.Location = "", ""
+		case *cloudlets.MatchRuleAS:
+			r.AkaRuleID, r.Location = "", ""
+		case *cloudlets.MatchRulePR:
+			r.AkaRuleID, r.Location = "", ""
+		case *cloudlets.MatchRuleER:
+			r.AkaRuleID, r.Location = "", ""
+		case *cloudlets.MatchRuleFR:
+			r.AkaRuleID, r.Location = "", ""
+		case *cloudlets.MatchRuleRC:
+			r.AkaRuleID, r.Location = "", ""
+		case *cloudlets.MatchRuleVP:
+			r.AkaRuleID, r.Location = "", ""
+		default:
+			return nil, fmt.Errorf("unsupported match rule type: %T", rule)
+		}
+	}
 	var matchRulesJSON []byte
 	if len(policyVersion.MatchRules) > 0 {
 		matchRulesJSON, err = json.MarshalIndent(policyVersion.MatchRules, "", "  ")

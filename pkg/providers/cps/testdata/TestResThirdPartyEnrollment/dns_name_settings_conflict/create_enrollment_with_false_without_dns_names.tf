@@ -25,8 +25,8 @@ resource "akamai_cps_third_party_enrollment" "third_party" {
     organization = "Akamai"
   }
   network_configuration {
-    clone_dns_names = false
-    geography       = "core"
+    enable_for_all_sans = false
+    geography           = "core"
   }
   signature_algorithm = "SHA-256"
   organization {

@@ -4,9 +4,9 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -43,7 +43,7 @@ func resourceCustomClientSequenceCreate(ctx context.Context, d *schema.ResourceD
 	if diagnostics != nil {
 		return diagnostics
 	}
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 	return resourceCustomClientSequenceRead(ctx, d, m)
 }
 
@@ -55,13 +55,13 @@ func resourceCustomClientSequenceUpdate(ctx context.Context, d *schema.ResourceD
 	return resourceCustomClientSequenceRead(ctx, d, m)
 }
 
-func resourceCustomClientSequenceUpsert(ctx context.Context, d *schema.ResourceData, m interface{}, operation string) (int, diag.Diagnostics) {
+func resourceCustomClientSequenceUpsert(ctx context.Context, d *schema.ResourceData, m interface{}, operation string) (int64, diag.Diagnostics) {
 	meta := meta.Must(m)
 	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", operation)
 	logger.Debugf("in %s", operation)
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return configID, diag.FromErr(err)
 	}
@@ -80,8 +80,8 @@ func resourceCustomClientSequenceUpsert(ctx context.Context, d *schema.ResourceD
 	}
 
 	request := botman.UpdateCustomClientSequenceRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 		Sequence: stringSequence,
 	}
 
@@ -100,7 +100,7 @@ func resourceCustomClientSequenceRead(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("botman", "resourceCustomClientSequenceRead")
 	logger.Debugf("in resourceCustomClientSequenceRead")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -111,8 +111,8 @@ func resourceCustomClientSequenceRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	request := botman.GetCustomClientSequenceRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 	}
 
 	response, err := client.GetCustomClientSequence(ctx, request)

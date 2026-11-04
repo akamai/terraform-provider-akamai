@@ -6,9 +6,9 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -48,15 +48,17 @@ func dataSourceRatePoliciesRead(ctx context.Context, d *schema.ResourceData, m i
 
 	getRatePolicies := appsec.GetRatePoliciesRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	getRatePolicies.ConfigID = configID
 
-	if getRatePolicies.ConfigVersion, err = getLatestConfigVersion(ctx, configID, client); err != nil {
+	version, err := getLatestConfigVersion(ctx, configID, client)
+	if err != nil {
 		return diag.FromErr(err)
 	}
+	getRatePolicies.ConfigVersion = version
 
 	ratePolicyID, err := tf.GetIntValue("rate_policy_id", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
@@ -90,7 +92,7 @@ func dataSourceRatePoliciesRead(ctx context.Context, d *schema.ResourceData, m i
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(getRatePolicies.ConfigID))
+	d.SetId(strconv.FormatInt(getRatePolicies.ConfigID, 10))
 
 	return nil
 }

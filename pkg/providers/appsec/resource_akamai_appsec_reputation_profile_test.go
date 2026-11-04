@@ -4,17 +4,18 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiReputationProfile_res_basic(t *testing.T) {
-	t.Parallel()
 	t.Run("match by ReputationProfile ID", func(t *testing.T) {
-		t.Parallel()
+		clearCache()
+		defer clearCache()
+
 		client := edgegrid.NewTestClient()
 
 		configResponse := appsec.GetConfigurationResponse{}
@@ -23,11 +24,7 @@ func TestAkamaiReputationProfile_res_basic(t *testing.T) {
 		client.APPSEC.On("GetConfiguration",
 			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
-		).Return(&configResponse, nil)
-
-		getReputationProfileResponse := appsec.GetReputationProfileResponse{}
-		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResReputationProfile/ReputationProfiles.json"), &getReputationProfileResponse)
-		require.NoError(t, err)
+		).Return(&configResponse, nil).Times(4)
 
 		createReputationProfileResponse := appsec.CreateReputationProfileResponse{}
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResReputationProfile/ReputationProfileCreated.json"), &createReputationProfileResponse)
@@ -38,20 +35,22 @@ func TestAkamaiReputationProfile_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		createReputationProfileJSON := testutils.LoadFixtureBytes(t, "testdata/TestResReputationProfile/CreateReputationProfile.json")
-
 		client.APPSEC.On("CreateReputationProfile",
 			testutils.MockContext,
 			appsec.CreateReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, JsonPayloadRaw: createReputationProfileJSON},
 		).Return(&createReputationProfileResponse, nil)
 
+		getReputationProfileResponse := appsec.GetReputationProfileResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResReputationProfile/ReputationProfileCreated.json"), &getReputationProfileResponse)
+		require.NoError(t, err)
 		client.APPSEC.On("GetReputationProfile",
 			testutils.MockContext,
-			appsec.GetReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileId: 12345},
+			appsec.GetReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileID: 12345},
 		).Return(&getReputationProfileResponse, nil)
 
 		client.APPSEC.On("RemoveReputationProfile",
 			testutils.MockContext,
-			appsec.RemoveReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileId: 12345},
+			appsec.RemoveReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileID: 12345},
 		).Return(&removeReputationProfileResponse, nil)
 
 		mockGetConfigurationVersionDefault(client.APPSEC)
@@ -69,5 +68,4 @@ func TestAkamaiReputationProfile_res_basic(t *testing.T) {
 
 		client.APPSEC.AssertExpectations(t)
 	})
-
 }

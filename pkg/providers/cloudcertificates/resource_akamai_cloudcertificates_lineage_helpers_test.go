@@ -1,11 +1,11 @@
 package cloudcertificates
 
 import (
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/ptr"
-	tst "github.com/akamai/terraform-provider-akamai/v11/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cloudcertificates"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/ptr"
+	tst "github.com/akamai/terraform-provider-akamai/v12/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 )
 
 // This file collects response/request builders and mock-setup helpers shared by the lineage resource's test
@@ -328,6 +328,24 @@ func mockListLineagesConflict(m *cloudcertificates.Mock, name string, existingID
 	}).Return(&cloudcertificates.ListLineagesResponse{
 		Lineages:   []cloudcertificates.Lineage{{LineageID: existingID, LineageName: name}},
 		TotalCount: 1,
+	}, nil).Once()
+}
+
+// mockListLineagesConflictOnSecondPage registers a ListLineages response whose exact-name match is on page two.
+func mockListLineagesConflictOnSecondPage(m *cloudcertificates.Mock, name string, existingID int64) {
+	m.On("ListLineages", testutils.MockContext, cloudcertificates.ListLineagesRequest{
+		LineageName: name, PageSize: 100,
+	}).Return(&cloudcertificates.ListLineagesResponse{
+		Lineages:   []cloudcertificates.Lineage{{LineageID: 999998, LineageName: "similarly-named-lineage"}},
+		NextCursor: ptr.To("next-cursor"),
+		TotalCount: 2,
+	}, nil).Once()
+	m.On("ListLineages", testutils.MockContext, cloudcertificates.ListLineagesRequest{
+		LineageName: name, PageSize: 100, After: "next-cursor",
+	}).Return(&cloudcertificates.ListLineagesResponse{
+		Lineages:   []cloudcertificates.Lineage{{LineageID: existingID, LineageName: name}},
+		NextCursor: ptr.To("unnecessary-third-page"),
+		TotalCount: 2,
 	}, nil).Once()
 }
 

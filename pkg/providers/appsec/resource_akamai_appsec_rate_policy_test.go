@@ -4,18 +4,18 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiRatePolicy_res_basic(t *testing.T) {
-	t.Parallel()
-
 	t.Run("match by RatePolicy ID", func(t *testing.T) {
-		t.Parallel()
+		clearCache()
+		defer clearCache()
+
 		client := edgegrid.NewTestClient()
 		configResponse := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
@@ -23,7 +23,7 @@ func TestAkamaiRatePolicy_res_basic(t *testing.T) {
 		client.APPSEC.On("GetConfiguration",
 			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
-		).Return(&configResponse, nil)
+		).Return(&configResponse, nil).Times(8)
 
 		createResponse := appsec.CreateRatePolicyResponse{}
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicy/RatePolicy.json"), &createResponse)
@@ -40,15 +40,7 @@ func TestAkamaiRatePolicy_res_basic(t *testing.T) {
 		client.APPSEC.On("GetRatePolicy",
 			testutils.MockContext,
 			appsec.GetRatePolicyRequest{ConfigID: 43253, ConfigVersion: 7, RatePolicyID: 134644},
-		).Return(&getResponse, nil).Once()
-		client.APPSEC.On("GetRatePolicy",
-			testutils.MockContext,
-			appsec.GetRatePolicyRequest{ConfigID: 43253, ConfigVersion: 7, RatePolicyID: 134644},
-		).Return(&getResponse, nil).Once()
-		client.APPSEC.On("GetRatePolicy",
-			testutils.MockContext,
-			appsec.GetRatePolicyRequest{ConfigID: 43253, ConfigVersion: 7, RatePolicyID: 134644},
-		).Return(&getResponse, nil).Once()
+		).Return(&getResponse, nil).Times(3)
 
 		updateResponse := appsec.UpdateRatePolicyResponse{}
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicy/RatePolicyUpdated.json"), &updateResponse)
@@ -65,7 +57,7 @@ func TestAkamaiRatePolicy_res_basic(t *testing.T) {
 		client.APPSEC.On("GetRatePolicy",
 			testutils.MockContext,
 			appsec.GetRatePolicyRequest{ConfigID: 43253, ConfigVersion: 7, RatePolicyID: 134644},
-		).Return(&getResponseAfterUpdate, nil).Twice()
+		).Return(&getResponseAfterUpdate, nil).Times(2)
 
 		removeResponse := appsec.RemoveRatePolicyResponse{}
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicy/RatePolicyEmpty.json"), &removeResponse)
@@ -98,7 +90,9 @@ func TestAkamaiRatePolicy_res_basic(t *testing.T) {
 	})
 
 	t.Run("suppress counterType and penaltyBoxDuration attributes", func(t *testing.T) {
-		t.Parallel()
+		clearCache()
+		defer clearCache()
+
 		client := edgegrid.NewTestClient()
 		configResponse := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
@@ -106,7 +100,7 @@ func TestAkamaiRatePolicy_res_basic(t *testing.T) {
 		client.APPSEC.On("GetConfiguration",
 			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
-		).Return(&configResponse, nil)
+		).Return(&configResponse, nil).Times(8)
 
 		createResponse := appsec.CreateRatePolicyResponse{}
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicy/suppress/RatePolicyResponse.json"), &createResponse)
@@ -140,7 +134,7 @@ func TestAkamaiRatePolicy_res_basic(t *testing.T) {
 		client.APPSEC.On("GetRatePolicy",
 			testutils.MockContext,
 			appsec.GetRatePolicyRequest{ConfigID: 43253, ConfigVersion: 7, RatePolicyID: 134644},
-		).Return(&getResponseAfterUpdate, nil).Twice()
+		).Return(&getResponseAfterUpdate, nil).Times(2)
 
 		removeResponse := appsec.RemoveRatePolicyResponse{}
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicy/suppress/RatePolicyEmpty.json"), &removeResponse)
@@ -171,5 +165,4 @@ func TestAkamaiRatePolicy_res_basic(t *testing.T) {
 
 		client.APPSEC.AssertExpectations(t)
 	})
-
 }

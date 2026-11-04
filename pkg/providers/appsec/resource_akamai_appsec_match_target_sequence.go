@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/id"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -51,7 +51,7 @@ func resourceMatchTargetSequenceCreate(ctx context.Context, d *schema.ResourceDa
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceCreate")
 	logger.Debugf("in resourceMatchTargetSequenceCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -89,7 +89,7 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -111,7 +111,7 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	jsonBody, err := json.Marshal(matchTargetSequence)
+	normalized, err := marshalNormalize(matchTargetSequence)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -119,7 +119,7 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 	if err := d.Set("config_id", configID); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-	if err := d.Set("match_target_sequence", string(jsonBody)); err != nil {
+	if err := d.Set("match_target_sequence", normalized); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
@@ -137,7 +137,7 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}

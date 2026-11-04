@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/id"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	akameta "github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	akameta "github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -73,7 +73,7 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface
 	logger := meta.Log("APPSEC", "resourceRuleCreate")
 	logger.Debugf("in resourceRuleCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -136,7 +136,7 @@ func resourceRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -178,11 +178,11 @@ func resourceRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	}
 
 	if !rule.IsEmptyConditionException() {
-		jsonBody, err := json.Marshal(rule.ConditionException)
+		normalized, err := marshalNormalize(rule.ConditionException)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		if err := d.Set("condition_exception", string(jsonBody)); err != nil {
+		if err := d.Set("condition_exception", normalized); err != nil {
 			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}
@@ -200,7 +200,7 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -256,7 +256,7 @@ func resourceRuleDelete(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}

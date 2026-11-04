@@ -2,14 +2,14 @@ package datastream
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/datastream"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/customtypes"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf/validators"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/customtypes"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/pagination"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf/validators"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -33,8 +33,7 @@ var answerXServiceIDItemAttrTypes = map[string]attr.Type{
 
 type (
 	answerXServiceIDsDataSource struct {
-		meta   meta.Meta
-		client datastream.DS
+		meta.DataSource
 	}
 
 	answerXServiceIDsDataSourceModel struct {
@@ -56,24 +55,6 @@ func NewAnswerXServiceIDsDataSource() datasource.DataSource {
 
 func (d *answerXServiceIDsDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_datastream_answerx_service_ids"
-}
-
-func (d *answerXServiceIDsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	m, ok := req.ProviderData.(meta.Meta)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	d.meta = m
-	d.client = inst.Client(m)
 }
 
 // Schema defines the Terraform schema for this data source.
@@ -113,6 +94,8 @@ func (d *answerXServiceIDsDataSource) Schema(_ context.Context, _ datasource.Sch
 
 const answerXServiceIDsPageSize int64 = 5000
 
+var errInvalidAnswerXServiceIDsResponse = errors.New("invalid API response")
+
 // Read is called when the provider must read data source values in order to update state.
 func (d *answerXServiceIDsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "DataStream AnswerXServiceIDs DataSource Read")
@@ -122,7 +105,7 @@ func (d *answerXServiceIDsDataSource) Read(ctx context.Context, req datasource.R
 		return
 	}
 
-	ctx = session.ContextWithOptions(ctx, session.WithContextLog(d.meta.Log("datastream", "answerXServiceIDsDataSourceRead")))
+	client := d.Client.GetDataStream()
 
 	contractID := strings.TrimPrefix(data.ContractID.ValueString(), "ctr_")
 	if contractID == "" {
@@ -130,32 +113,32 @@ func (d *answerXServiceIDsDataSource) Read(ctx context.Context, req datasource.R
 		return
 	}
 
-	var allServiceIDs []datastream.AnswerXServiceDetail
-	var page int64 = 1
-	for {
-		response, err := d.client.ListAnswerXServiceIDs(ctx, datastream.ListAnswerXServiceIDsRequest{
-			ContractID: contractID,
-			Page:       page,
-			PageSize:   answerXServiceIDsPageSize,
-		})
-		if err != nil {
-			resp.Diagnostics.AddError("Listing AnswerX service IDs failed", err.Error())
-			return
-		}
-
-		if response == nil || response.Metadata == nil || response.Metadata.Page != page || response.Metadata.LastPage < page {
-			resp.Diagnostics.AddError(
-				"Listing AnswerX service IDs failed", "Failed to list AnswerX service IDs: invalid API response",
-			)
-			return
-		}
-
-		allServiceIDs = append(allServiceIDs, response.AnswerXServiceIDs...)
-
-		if response.Metadata.Page >= response.Metadata.LastPage {
-			break
-		}
-		page++
+	allServiceIDs, err := pagination.CollectPageItems(ctx, pagination.PageOptions[int64, datastream.AnswerXServiceDetail, datastream.ListAnswerXServiceIDsResponse]{
+		InitialState: 1,
+		Fetch: func(ctx context.Context, page int64) (*datastream.ListAnswerXServiceIDsResponse, error) {
+			response, err := client.ListAnswerXServiceIDs(ctx, datastream.ListAnswerXServiceIDsRequest{
+				ContractID: contractID,
+				Page:       page,
+				PageSize:   answerXServiceIDsPageSize,
+			})
+			if err != nil {
+				return nil, err
+			}
+			if response == nil || response.Metadata == nil || response.Metadata.Page != page || response.Metadata.LastPage < page {
+				return nil, errInvalidAnswerXServiceIDsResponse
+			}
+			return response, nil
+		},
+		Items: func(response *datastream.ListAnswerXServiceIDsResponse) []datastream.AnswerXServiceDetail {
+			return response.AnswerXServiceIDs
+		},
+		Next: func(page int64, response *datastream.ListAnswerXServiceIDsResponse) (int64, bool) {
+			return page + 1, response.Metadata.Page < response.Metadata.LastPage
+		},
+	})
+	if err != nil {
+		resp.Diagnostics.AddError("Listing AnswerX service IDs failed", err.Error())
+		return
 	}
 
 	serviceIDs, diags := parseAnswerXServiceIDModels(ctx, allServiceIDs)

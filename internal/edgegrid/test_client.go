@@ -1,30 +1,31 @@
 package edgegrid
 
 import (
-	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/accountprotection"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/apidefinitions"
-	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/apidefinitions/v0"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/botman"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/clientlists"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudaccess"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudlets"
-	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudlets/v3"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudwrapper"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/dns"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/domainownership"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/edgeworkers"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/imaging"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/mtlskeystore"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/mtlstruststore"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/networklists"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/reportinggroups"
+	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/accountprotection"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/apidefinitions"
+	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/apidefinitions/v0"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/botman"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/clientlists"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cloudaccess"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cloudcertificates"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cloudlets"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cloudlets/v3"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cloudwrapper"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/domainownership"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/imaging"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/mtlskeystore"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/mtlstruststore"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/networklists"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/reportinggroups"
 )
 
 var (
@@ -45,6 +46,7 @@ type TestClient struct {
 	CloudletsV3       *v3.Mock
 	CloudWrapper      *cloudwrapper.Mock
 	CPS               *cps.Mock
+	DataStream        *datastream.Mock
 	DNS               *dns.Mock
 	DomainOwnership   *domainownership.Mock
 	EdgeWorkers       *edgeworkers.Mock
@@ -74,6 +76,7 @@ func NewTestClient() *TestClient {
 		CloudletsV3:       &v3.Mock{},
 		CloudWrapper:      &cloudwrapper.Mock{},
 		CPS:               &cps.Mock{},
+		DataStream:        &datastream.Mock{},
 		DNS:               &dns.Mock{},
 		DomainOwnership:   &domainownership.Mock{},
 		EdgeWorkers:       &edgeworkers.Mock{},
@@ -147,6 +150,11 @@ func (c *TestClient) GetCloudWrapper() cloudwrapper.CloudWrapper {
 // GetCPS returns the mock CPS client.
 func (c *TestClient) GetCPS() cps.CPS {
 	return c.CPS
+}
+
+// GetDataStream returns the mock DataStream client.
+func (c *TestClient) GetDataStream() datastream.DS {
+	return c.DataStream
 }
 
 // GetDNS returns the mock DNS client.

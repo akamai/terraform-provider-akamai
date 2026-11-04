@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/datastream"
 )
 
 func dataAkamaiDatastreamActivationHistory() *schema.Resource {
@@ -102,7 +102,7 @@ func populateSchemaFieldsWithActivationHistory(ac []datastream.ActivationHistory
 func dataAkamaiDatastreamActivationHistoryRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	log := meta.Log("DataStream", "dataAkamaiDatastreamActivationHistoryRead")
-	client := inst.Client(meta)
+	client := meta.Client().GetDataStream()
 
 	streamID, err := tf.GetIntValue("stream_id", d)
 	if err != nil {

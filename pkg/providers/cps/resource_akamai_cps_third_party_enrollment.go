@@ -8,13 +8,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
-	cpstools "github.com/akamai/terraform-provider-akamai/v11/pkg/providers/cps/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
+	cpstools "github.com/akamai/terraform-provider-akamai/v12/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -78,6 +78,12 @@ func resourceCPSThirdPartyEnrollment(pollChangeStatusInterval, pollGetEnrollment
 				ForceNew:    true,
 				Description: "Whether Server Name Indication is used for enrollment",
 			},
+			"acknowledge_deletion_warnings": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Whether to acknowledge warnings during enrollment deletion. Default is false.",
+			},
 			"acknowledge_pre_verification_warnings": {
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -113,10 +119,8 @@ func resourceCPSThirdPartyEnrollment(pollChangeStatusInterval, pollGetEnrollment
 				Description: "Data used for generation of Certificate Signing Request",
 			},
 			"network_configuration": {
-				Type:     schema.TypeList,
-				Optional: true,
-				// It was changed from required to optional to be able to support clone_dns_names and enable_for_all_sans at the same time during transition period.
-				// It will be changed back to required in the future when clone_dns_names will be removed from the resource.
+				Type:        schema.TypeList,
+				Optional:    true,
 				Computed:    true,
 				MaxItems:    1,
 				Elem:        networkConfiguration,
@@ -193,6 +197,7 @@ func resourceCPSThirdPartyEnrollment(pollChangeStatusInterval, pollGetEnrollment
 			},
 			validateNetworkConfigurationPresent,
 			setDefaultEnableForAllSANs,
+			updateDNSNamesForAllSANs,
 			validateDNSNameSettingsConflict,
 		),
 		Timeouts: &schema.ResourceTimeout{
@@ -330,8 +335,8 @@ func (r *thirdPartyEnrollmentResource) update(ctx context.Context, d *schema.Res
 	client := meta.Client().GetCPS()
 	logger.Debug("Updating enrollment")
 
-	if !d.HasChangeExcept("timeouts") {
-		logger.Debug("Only timeouts were updated, skipping")
+	if !d.HasChangesExcept("timeouts", "acknowledge_deletion_warnings") {
+		logger.Debug("Only local settings were updated, skipping")
 		return nil
 	}
 
@@ -506,6 +511,9 @@ func (r *thirdPartyEnrollmentResource) importState(ctx context.Context, d *schem
 		return nil, fmt.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("acknowledge_pre_verification_warnings", false); err != nil {
+		return nil, fmt.Errorf("%v: %s", tf.ErrValueSet, err.Error())
+	}
+	if err := d.Set("acknowledge_deletion_warnings", false); err != nil {
 		return nil, fmt.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("auto_approve_warnings", []string{}); err != nil {

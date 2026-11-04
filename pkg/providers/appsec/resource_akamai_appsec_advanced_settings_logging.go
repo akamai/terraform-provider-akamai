@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/id"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -61,7 +61,7 @@ func resourceAdvancedSettingsLoggingCreate(ctx context.Context, d *schema.Resour
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingCreate")
 	logger.Debugf("in resourceAdvancedSettingsLoggingCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -111,7 +111,7 @@ func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resource
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		configID, err := strconv.Atoi(iDParts[0])
+		configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -125,7 +125,7 @@ func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resource
 		getAdvancedSettingsLogging.Version = version
 		getAdvancedSettingsLogging.PolicyID = policyID
 	} else {
-		configID, err := strconv.Atoi(d.Id())
+		configID, err := strconv.ParseInt(d.Id(), 10, 64)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -150,11 +150,11 @@ func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resource
 	if err := d.Set("security_policy_id", getAdvancedSettingsLogging.PolicyID); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-	jsonBody, err := json.Marshal(advancedsettingslogging)
+	normalized, err := marshalNormalize(advancedsettingslogging)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set("logging", string(jsonBody)); err != nil {
+	if err := d.Set("logging", normalized); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
@@ -173,7 +173,7 @@ func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.Resour
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		configID, err := strconv.Atoi(iDParts[0])
+		configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -187,7 +187,7 @@ func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.Resour
 		updateAdvancedSettingsLogging.Version = version
 		updateAdvancedSettingsLogging.PolicyID = policyID
 	} else {
-		configID, err := strconv.Atoi(d.Id())
+		configID, err := strconv.ParseInt(d.Id(), 10, 64)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -226,7 +226,7 @@ func resourceAdvancedSettingsLoggingDelete(ctx context.Context, d *schema.Resour
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		configID, err := strconv.Atoi(iDParts[0])
+		configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -241,7 +241,7 @@ func resourceAdvancedSettingsLoggingDelete(ctx context.Context, d *schema.Resour
 		removeAdvancedSettingsLogging.PolicyID = policyID
 		removeAdvancedSettingsLogging.Override = false
 	} else {
-		configID, err := strconv.Atoi(d.Id())
+		configID, err := strconv.ParseInt(d.Id(), 10, 64)
 		if err != nil {
 			return diag.FromErr(err)
 		}

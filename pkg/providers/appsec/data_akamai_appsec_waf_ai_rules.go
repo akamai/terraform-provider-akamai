@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -144,7 +144,7 @@ func (d *wafAIRulesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	configID := data.ConfigID.ValueInt64()
 	policyID := data.SecurityPolicyID.ValueString()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), client)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		resp.Diagnostics.AddError("fetching latest config version", err.Error())
 		return

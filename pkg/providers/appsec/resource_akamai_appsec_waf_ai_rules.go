@@ -9,10 +9,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/modifiers"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf/validators"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/framework/modifiers"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf/validators"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -183,7 +183,7 @@ func (r *wafAIRulesResource) Create(ctx context.Context, req resource.CreateRequ
 	policyID := data.SecurityPolicyID.ValueString()
 	client := r.Client.GetAPPSEC()
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), wafAIRulesResourceName, client)
+	version, err := getModifiableConfigVersion(ctx, configID, wafAIRulesResourceName, client)
 	if err != nil {
 		resp.Diagnostics.AddError("fetching modifiable config version", err.Error())
 		return
@@ -242,7 +242,7 @@ func (r *wafAIRulesResource) Read(ctx context.Context, req resource.ReadRequest,
 	policyID := data.SecurityPolicyID.ValueString()
 	client := r.Client.GetAPPSEC()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), client)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		resp.Diagnostics.AddError("fetching latest config version", err.Error())
 		return
@@ -304,7 +304,7 @@ func (r *wafAIRulesResource) Update(ctx context.Context, req resource.UpdateRequ
 	policyID := plan.SecurityPolicyID.ValueString()
 	client := r.Client.GetAPPSEC()
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), wafAIRulesResourceName, client)
+	version, err := getModifiableConfigVersion(ctx, configID, wafAIRulesResourceName, client)
 	if err != nil {
 		resp.Diagnostics.AddError("fetching modifiable config version", err.Error())
 		return
@@ -366,7 +366,7 @@ func (r *wafAIRulesResource) Delete(ctx context.Context, req resource.DeleteRequ
 		configID := data.ConfigID.ValueInt64()
 		policyID := data.SecurityPolicyID.ValueString()
 		client := r.Client.GetAPPSEC()
-		version, err := getModifiableConfigVersion(ctx, int(configID), wafAIRulesResourceName, client)
+		version, err := getModifiableConfigVersion(ctx, configID, wafAIRulesResourceName, client)
 		if err != nil {
 			resp.Diagnostics.AddError("fetching modifiable config version", err.Error())
 			return
@@ -397,7 +397,7 @@ func (r *wafAIRulesResource) Delete(ctx context.Context, req resource.DeleteRequ
 	policyID := data.SecurityPolicyID.ValueString()
 	client := r.Client.GetAPPSEC()
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), wafAIRulesResourceName, client)
+	version, err := getModifiableConfigVersion(ctx, configID, wafAIRulesResourceName, client)
 	if err != nil {
 		resp.Diagnostics.AddError("fetching modifiable config version", err.Error())
 		return
@@ -440,7 +440,7 @@ func (r *wafAIRulesResource) ImportState(ctx context.Context, req resource.Impor
 
 	client := r.Client.GetAPPSEC()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), client)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		resp.Diagnostics.AddError("fetching latest config version", err.Error())
 		return
@@ -503,7 +503,7 @@ func (r *wafAIRulesResource) ImportState(ctx context.Context, req resource.Impor
 	resp.Diagnostics.Append(resp.Private.SetKey(ctx, "rule_version", []byte(strconv.FormatInt(importedRule.RuleVersion, 10)))...)
 }
 
-func (r *wafAIRulesResource) findAIRule(ctx context.Context, client appsec.APPSEC, configID int64, version int, policyID string, ruleID int64) (*appsec.PolicyAIRule, error) {
+func (r *wafAIRulesResource) findAIRule(ctx context.Context, client appsec.APPSEC, configID int64, version int64, policyID string, ruleID int64) (*appsec.PolicyAIRule, error) {
 	rulesResp, err := client.ListAIRules(ctx, appsec.ListAIRulesRequest{
 		ConfigID: configID, Version: version, PolicyID: policyID,
 	})

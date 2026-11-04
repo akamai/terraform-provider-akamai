@@ -5,10 +5,11 @@ import (
 	"math"
 	"slices"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/ptr"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cloudcertificates"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/ptr"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/pagination"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -209,7 +210,6 @@ func (d *lineagesDataSource) Read(ctx context.Context, req datasource.ReadReques
 		Domain:        data.Domain.ValueString(),
 		KeyType:       cloudcertificates.CryptographicAlgorithm(data.KeyType.ValueString()),
 		Issuer:        data.Issuer.ValueString(),
-		PageSize:      cloudcertificates.MaxListLineagesPageSize,
 	}
 
 	if tf.IsKnown(data.ExpiringInDays) {
@@ -248,7 +248,11 @@ func (d *lineagesDataSource) Read(ctx context.Context, req datasource.ReadReques
 		}
 	}
 
-	allLineages, err := d.listAllLineages(ctx, listReq, data.Limit.ValueInt64Pointer())
+	allLineages, err := pagination.Collect(ctx, lineagesPaginationOptions(
+		d.Client.GetCloudCertificates(),
+		listReq,
+		data.Limit.ValueInt64Pointer(),
+	))
 	if err != nil {
 		resp.Diagnostics.AddError("Read Cloud Certificates Lineages failed", err.Error())
 		return
@@ -261,46 +265,6 @@ func (d *lineagesDataSource) Read(ctx context.Context, req datasource.ReadReques
 	data.Lineages = lineageModels
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-// listAllLineages follows the API's keyset pagination cursor until the lineage list is exhausted or the
-// requested limit is collected. A nil limit collects all lineages.
-func (d *lineagesDataSource) listAllLineages(ctx context.Context, listReq cloudcertificates.ListLineagesRequest, limit *int64) ([]cloudcertificates.Lineage, error) {
-	client := d.Client.GetCloudCertificates()
-
-	var allLineages []cloudcertificates.Lineage
-	for {
-		if limit != nil {
-			remaining := *limit - int64(len(allLineages))
-			if remaining <= 0 {
-				break
-			}
-			listReq.PageSize = int(min(remaining, int64(cloudcertificates.MaxListLineagesPageSize)))
-		}
-
-		res, err := client.ListLineages(ctx, listReq)
-		if err != nil {
-			return nil, err
-		}
-
-		pageLineages := res.Lineages
-		if limit != nil {
-			remaining := *limit - int64(len(allLineages))
-			if int64(len(pageLineages)) > remaining {
-				pageLineages = pageLineages[:int(remaining)]
-			}
-		}
-		allLineages = append(allLineages, pageLineages...)
-
-		if len(pageLineages) == 0 || res.NextCursor == nil || *res.NextCursor == "" {
-			break
-		}
-
-		nextCursor := *res.NextCursor
-		listReq.After = nextCursor
-	}
-
-	return allLineages, nil
 }
 
 func mapLineageItemToModel(lineage cloudcertificates.Lineage) lineageItemModel {

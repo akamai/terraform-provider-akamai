@@ -6,11 +6,11 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -165,7 +165,7 @@ func TestDataAdvancedSettingsURLEvasionDefense(t *testing.T) {
 	}
 }
 
-func mockGetConfigurationForURLDefenseDS(m *appsec.Mock, configID, latestVersion int) {
+func mockGetConfigurationForURLDefenseDS(m *appsec.Mock, configID, latestVersion int64) {
 	m.On("GetConfiguration", mock.Anything, appsec.GetConfigurationRequest{ConfigID: configID}).
 		Return(&appsec.GetConfigurationResponse{
 			ID:                configID,
@@ -175,7 +175,7 @@ func mockGetConfigurationForURLDefenseDS(m *appsec.Mock, configID, latestVersion
 		}, nil)
 }
 
-func mockGetConfigurationFailureForURLDefenseDS(m *appsec.Mock, configID int) {
+func mockGetConfigurationFailureForURLDefenseDS(m *appsec.Mock, configID int64) {
 	m.On("GetConfiguration", mock.Anything, appsec.GetConfigurationRequest{ConfigID: configID}).
 		Return(nil, &urlEvasionDefenseDSServerError)
 }

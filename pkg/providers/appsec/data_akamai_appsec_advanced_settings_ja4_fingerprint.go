@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -42,7 +42,7 @@ func dataSourceAdvancedSettingsJA4FingerprintRead(ctx context.Context, d *schema
 
 	getAdvancedSettingsJA4FingerprintReq := appsec.GetAdvancedSettingsJA4FingerprintRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -78,7 +78,7 @@ func dataSourceAdvancedSettingsJA4FingerprintRead(ctx context.Context, d *schema
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(getAdvancedSettingsJA4FingerprintReq.ConfigID))
+	d.SetId(strconv.FormatInt(getAdvancedSettingsJA4FingerprintReq.ConfigID, 10))
 
 	return nil
 }

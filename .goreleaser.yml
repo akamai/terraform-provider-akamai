@@ -17,7 +17,7 @@ builds:
     - -trimpath
     - -tags=all
   ldflags:
-    - -s -w -X github.com/akamai/terraform-provider-akamai/v11/version.ProviderVersion={{.Version}}
+    - -s -w -X github.com/akamai/terraform-provider-akamai/v12/version.ProviderVersion={{.Version}}
   goos:
     - windows
     - linux
@@ -35,7 +35,8 @@ builds:
       goarch: arm
   binary: '{{ .ProjectName }}_v{{ .Version }}'
 archives:
-- format: zip
+- formats:
+    - zip
   name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
 checksum:
   extra_files:

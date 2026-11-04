@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/cache"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/cache"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
@@ -33,18 +33,18 @@ var (
 // modifiableVersionCacheKey returns the cache key used by getModifiableConfigVersion.
 // This key is only written after verifying the stored version is modifiable, so
 // cache hits on this key are always safe to return without re-checking modifiability.
-func modifiableVersionCacheKey(configID int) string {
+func modifiableVersionCacheKey(configID int64) string {
 	return fmt.Sprintf("modifiable:%d", configID)
 }
 
 // latestVersionCacheKey returns the cache key used by getLatestConfigVersion.
-func latestVersionCacheKey(configID int) string {
+func latestVersionCacheKey(configID int64) string {
 	return fmt.Sprintf("latest:%d", configID)
 }
 
 // invalidateConfigCache clears both cached versions for the given configID.
 // Call this after activation or deactivation completes, since either can change which version is active.
-func invalidateConfigCache(configID int) {
+func invalidateConfigCache(configID int64) {
 	_ = cache.Delete(cache.BucketName(SubproviderName), modifiableVersionCacheKey(configID))
 	_ = cache.Delete(cache.BucketName(SubproviderName), latestVersionCacheKey(configID))
 }
@@ -55,7 +55,7 @@ func invalidateConfigCache(configID int) {
 // version is cloned and the new version's number is returned. API calls are made
 // using the supplied context and the passed API client.
 // A mutex prevents calls made by multiple resources from creating unnecessary clones.
-func getModifiableConfigVersion(ctx context.Context, configID int, resource string, client appsec.APPSEC) (int, error) {
+func getModifiableConfigVersion(ctx context.Context, configID int64, resource string, client appsec.APPSEC) (int64, error) {
 	// If the version info is in the cache, return it immediately.
 	cacheKey := modifiableVersionCacheKey(configID)
 	configuration := &appsec.GetConfigurationResponse{}
@@ -141,7 +141,7 @@ func getModifiableConfigVersion(ctx context.Context, configID int, resource stri
 
 // getLatestConfigVersion returns the latest version number of the given security
 // configuration. API calls are made using the supplied context and the passed API client.
-func getLatestConfigVersion(ctx context.Context, configID int, client appsec.APPSEC) (int, error) {
+func getLatestConfigVersion(ctx context.Context, configID int64, client appsec.APPSEC) (int64, error) {
 	// Return the cached value if we have one
 	cacheKey := latestVersionCacheKey(configID)
 	configuration := &appsec.GetConfigurationResponse{}
@@ -184,7 +184,7 @@ func getLatestConfigVersion(ctx context.Context, configID int, client appsec.APP
 // getActiveConfigVersions returns the version numbers of the given security configuration
 // active in staging and production respectively. API calls are made using the supplied context
 // and the passed API client.
-func getActiveConfigVersions(ctx context.Context, configID int, client appsec.APPSEC) (int, int, error) {
+func getActiveConfigVersions(ctx context.Context, configID int64, client appsec.APPSEC) (int64, int64, error) {
 	// Reuse the same cache key and mutex as getLatestConfigVersion — same API call, same response struct.
 	// This ensures both functions stay in sync: evicting one evicts the other.
 	cacheKey := latestVersionCacheKey(configID)
@@ -228,7 +228,7 @@ func getActiveConfigVersions(ctx context.Context, configID int, client appsec.AP
 // 1. If it's currently active in staging or production
 // 2. If it was previously active (has "Deactivated" status)
 // Returns true if modifiable, false if not, along with a reason string.
-func checkIfVersionIsModifiable(ctx context.Context, client appsec.APPSEC, configID, versionToCheck, stagingVersion, productionVersion int) (bool, string) {
+func checkIfVersionIsModifiable(ctx context.Context, client appsec.APPSEC, configID, versionToCheck, stagingVersion, productionVersion int64) (bool, string) {
 	// First check if version is currently active
 	if versionToCheck == stagingVersion || versionToCheck == productionVersion {
 		return false, "version is active in staging or production"

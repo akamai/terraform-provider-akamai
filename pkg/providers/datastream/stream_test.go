@@ -3,8 +3,8 @@ package datastream
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/datastream"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,6 +16,8 @@ func newSet(items ...interface{}) *schema.Set {
 }
 
 func TestGetConfig(t *testing.T) {
+	t.Parallel()
+
 	tests := map[string]struct {
 		configElements   *schema.Set
 		expectedErrorMsg string
@@ -67,6 +69,8 @@ func TestGetConfig(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			configStruct, err := GetConfig(test.configElements)
 			if test.expectedErrorMsg != "" {
 				assert.Contains(t, err.Error(), test.expectedErrorMsg)
@@ -79,6 +83,8 @@ func TestGetConfig(t *testing.T) {
 }
 
 func TestConfigToSet(t *testing.T) {
+	t.Parallel()
+
 	config := datastream.DeliveryConfiguration{
 		Delimiter: datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
 		Format:    datastream.FormatTypeStructured,
@@ -135,16 +141,22 @@ func TestResolveUploadFilePrefixSuffixForRead(t *testing.T) {
 	d := testResourceDataWithDeliveryConfig(t, "pre", "suf")
 
 	t.Run("prefers API values when present", func(t *testing.T) {
+		t.Parallel()
+
 		assert.Equal(t, "api-pre", resolveUploadFilePrefixForRead("api-pre", d))
 		assert.Equal(t, "api-suf", resolveUploadFileSuffixForRead("api-suf", d))
 	})
 
 	t.Run("preserves configured values when API omits prefix and suffix", func(t *testing.T) {
+		t.Parallel()
+
 		assert.Equal(t, "pre", resolveUploadFilePrefixForRead("", d))
 		assert.Equal(t, "suf", resolveUploadFileSuffixForRead("", d))
 	})
 
 	t.Run("uses defaults when API and config omit prefix and suffix", func(t *testing.T) {
+		t.Parallel()
+
 		empty := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{})
 		assert.Equal(t, DefaultUploadFilePrefix, resolveUploadFilePrefixForRead("", empty))
 		assert.Equal(t, DefaultUploadFileSuffix, resolveUploadFileSuffixForRead("", empty))
@@ -168,6 +180,8 @@ func TestApplyDeliveryConfigurationForRead(t *testing.T) {
 }
 
 func TestGetFrequency(t *testing.T) {
+	t.Parallel()
+
 	tests := map[string]struct {
 		frequencyElements *schema.Set
 		expectedErrorMsg  string
@@ -195,6 +209,8 @@ func TestGetFrequency(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			frequencyStruct, err := GetFrequency(test.frequencyElements)
 			if test.expectedErrorMsg != "" {
 				assert.Contains(t, err.Error(), test.expectedErrorMsg)
@@ -207,6 +223,8 @@ func TestGetFrequency(t *testing.T) {
 }
 
 func TestFrequencyToSet(t *testing.T) {
+	t.Parallel()
+
 	frequency := datastream.Frequency{
 		IntervalInSeconds: datastream.IntervalInSeconds60,
 	}
@@ -221,6 +239,8 @@ func TestFrequencyToSet(t *testing.T) {
 }
 
 func TestInterfaceSliceToIntSlice(t *testing.T) {
+	t.Parallel()
+
 	tests := map[string]struct {
 		input    []interface{}
 		expected []int
@@ -237,12 +257,16 @@ func TestInterfaceSliceToIntSlice(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			assert.Equal(t, test.expected, InterfaceSliceToIntSlice(test.input))
 		})
 	}
 }
 
 func TestInterfaceSliceToStringSlice(t *testing.T) {
+	t.Parallel()
+
 	tests := map[string]struct {
 		input    []interface{}
 		expected []string
@@ -259,12 +283,15 @@ func TestInterfaceSliceToStringSlice(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			assert.Equal(t, test.expected, tf.InterfaceSliceToStringSlice(test.input))
 		})
 	}
 }
 
 func TestDataSetFieldsToList(t *testing.T) {
+	t.Parallel()
 
 	datasets := datastream.DataSets{
 		DataSetFields: []datastream.DataSetField{
@@ -292,6 +319,8 @@ func TestDataSetFieldsToList(t *testing.T) {
 }
 
 func TestPropertyToList(t *testing.T) {
+	t.Parallel()
+
 	properties := []datastream.Property{
 		{
 			PropertyID:   1,
@@ -311,6 +340,8 @@ func TestPropertyToList(t *testing.T) {
 }
 
 func TestGetPropertiesList(t *testing.T) {
+	t.Parallel()
+
 	properties := []interface{}{
 		"1",
 		"2",
@@ -330,6 +361,8 @@ func TestGetPropertiesList(t *testing.T) {
 }
 
 func TestAppSecConfigsToList(t *testing.T) {
+	t.Parallel()
+
 	configs := []datastream.AppSecConfig{
 		{AppSecID: 16536, AppSecName: "WAF Security File"},
 		{AppSecID: 67890, AppSecName: "Bot Manager Config"},
@@ -339,6 +372,8 @@ func TestAppSecConfigsToList(t *testing.T) {
 }
 
 func TestGetAppSecConfigIDs(t *testing.T) {
+	t.Parallel()
+
 	configs := []interface{}{16536, 67890}
 
 	result, err := GetAppSecConfigIDs(configs)
@@ -416,6 +451,8 @@ func TestIsPropertiesOrderDifferent(t *testing.T) {
 	t.Parallel()
 
 	t.Run("falls back to hash comparison when properties attribute unchanged", func(t *testing.T) {
+		t.Parallel()
+
 		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
 			"log_type":    "CDN",
 			"active":      false,

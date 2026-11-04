@@ -5,15 +5,17 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/action"
 	"github.com/hashicorp/terraform-plugin-framework/action/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 var (
@@ -84,8 +86,9 @@ func (a *ForceCertificateRenewalAction) Invoke(ctx context.Context, req action.I
 		return
 	}
 
-	logger := a.Log("CPS", "ForceCertificateRenewalAction")
+	logger := log.FromContext(ctx, "CPS", "ForceCertificateRenewalAction")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+	tflog.Debug(ctx, "CPS Force Certificate Renewal Action Invoke")
 	client := a.Client.GetCPS()
 	enrollmentID := int(data.EnrollmentID.ValueInt64())
 	acknowledgePreVerificationWarnings := data.AcknowledgePreVerificationWarnings.ValueBool()

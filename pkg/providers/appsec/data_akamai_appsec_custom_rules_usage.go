@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -132,7 +132,7 @@ func (d *customRulesUsageDataSource) Read(ctx context.Context, request datasourc
 	client := d.Client.GetAPPSEC()
 	configID := data.ConfigID.ValueInt64()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), d.Client.GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, configID, d.Client.GetAPPSEC())
 	if err != nil {
 		response.Diagnostics.AddError("get latest config version error", err.Error())
 		return

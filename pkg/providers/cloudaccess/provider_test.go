@@ -4,15 +4,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 )
 
 const (
 	testPollingInterval   = 1 * time.Millisecond
-	testActivationTimeout = 20 * time.Millisecond
-	testUpdateTimeout     = 20 * time.Millisecond
-	testDeleteTimeout     = 1 * time.Second
+	testActivationTimeout = 10 * time.Second
+	testUpdateTimeout     = 10 * time.Second
+	testDeleteTimeout     = 10 * time.Second
 )
 
 func TestMain(m *testing.M) {

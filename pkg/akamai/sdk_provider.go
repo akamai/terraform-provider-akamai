@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/cache"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/collections"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/subprovider"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/cache"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/collections"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -44,16 +44,19 @@ func NewSDKProvider(subprovs ...subprovider.Subprovider) plugin.ProviderFunc {
 							Required: true,
 						},
 						"access_token": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:      schema.TypeString,
+							Required:  true,
+							Sensitive: true,
 						},
 						"client_token": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:      schema.TypeString,
+							Required:  true,
+							Sensitive: true,
 						},
 						"client_secret": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:      schema.TypeString,
+							Required:  true,
+							Sensitive: true,
 						},
 						"max_body": {
 							Type:     schema.TypeInt,

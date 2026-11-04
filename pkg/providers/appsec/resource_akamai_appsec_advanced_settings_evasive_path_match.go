@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/id"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -57,7 +57,7 @@ func resourceAdvancedSettingsEvasivePathMatchCreate(ctx context.Context, d *sche
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsEvasivePathMatchCreate")
 	logger.Debugf("in resourceAdvancedSettingsEvasivePathMatchCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -108,7 +108,7 @@ func resourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *schema
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		configID, err := strconv.Atoi(iDParts[0])
+		configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -122,7 +122,7 @@ func resourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *schema
 		getAdvancedSettingsEvasivePathMatch.Version = version
 		getAdvancedSettingsEvasivePathMatch.PolicyID = policyID
 	} else {
-		configID, err := strconv.Atoi(d.Id())
+		configID, err := strconv.ParseInt(d.Id(), 10, 64)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -166,7 +166,7 @@ func resourceAdvancedSettingsEvasivePathMatchUpdate(ctx context.Context, d *sche
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		configID, err := strconv.Atoi(iDParts[0])
+		configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -180,7 +180,7 @@ func resourceAdvancedSettingsEvasivePathMatchUpdate(ctx context.Context, d *sche
 		updateAdvancedSettingsEvasivePathMatch.Version = version
 		updateAdvancedSettingsEvasivePathMatch.PolicyID = policyID
 	} else {
-		configID, err := strconv.Atoi(d.Id())
+		configID, err := strconv.ParseInt(d.Id(), 10, 64)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -219,7 +219,7 @@ func resourceAdvancedSettingsEvasivePathMatchDelete(ctx context.Context, d *sche
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		configID, err := strconv.Atoi(iDParts[0])
+		configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -233,7 +233,7 @@ func resourceAdvancedSettingsEvasivePathMatchDelete(ctx context.Context, d *sche
 		removeAdvancedSettingsEvasivePathMatch.Version = version
 		removeAdvancedSettingsEvasivePathMatch.PolicyID = policyID
 	} else {
-		configID, err := strconv.Atoi(d.Id())
+		configID, err := strconv.ParseInt(d.Id(), 10, 64)
 		if err != nil {
 			return diag.FromErr(err)
 		}

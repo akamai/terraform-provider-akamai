@@ -3,9 +3,9 @@ package iam
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/date"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/date"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -74,6 +74,7 @@ func (d *apiClientsDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 					Attributes: map[string]schema.Attribute{
 						"access_token": schema.StringAttribute{
 							Computed:    true,
+							Sensitive:   true,
 							Description: "The part of the client secret that identifies your API client and lets you access applications and resources.",
 						},
 						"actions": schema.SingleNestedAttribute{
@@ -158,6 +159,7 @@ func (d *apiClientsDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 						},
 						"service_consumer_token": schema.StringAttribute{
 							Computed:    true,
+							Sensitive:   true,
 							Description: "Unique identifier for the service hostname.",
 						},
 					},

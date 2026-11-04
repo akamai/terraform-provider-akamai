@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"strconv"
 
-	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/accountprotection"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/accountprotection"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -48,7 +48,7 @@ func createResourceUserRiskResponseStrategy(ctx context.Context, d *schema.Resou
 	logger := meta.Log("accountprotection", "createResourceUserRiskResponseStrategy")
 	logger.Debugf("in createResourceUserRiskResponseStrategy")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -64,8 +64,8 @@ func createResourceUserRiskResponseStrategy(ctx context.Context, d *schema.Resou
 	}
 
 	request := apr.UpsertUserRiskResponseStrategyRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		JsonPayload: json.RawMessage(jsonPayloadString),
 	}
 
@@ -75,7 +75,7 @@ func createResourceUserRiskResponseStrategy(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 
 	return readResourceUserRiskResponseStrategy(ctx, d, m)
 }
@@ -86,7 +86,7 @@ func readResourceUserRiskResponseStrategy(ctx context.Context, d *schema.Resourc
 	logger := meta.Log("accountprotection", "readResourceUserRiskResponseStrategy")
 	logger.Debugf("in readResourceUserRiskResponseStrategy")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -97,8 +97,8 @@ func readResourceUserRiskResponseStrategy(ctx context.Context, d *schema.Resourc
 	}
 
 	request := apr.GetUserRiskResponseStrategyRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 	}
 
 	response, err := client.GetUserRiskResponseStrategy(ctx, request)
@@ -131,7 +131,7 @@ func updateResourceUserRiskResponseStrategy(ctx context.Context, d *schema.Resou
 	logger := meta.Log("accountprotection", "updateResourceUserRiskResponseStrategy")
 	logger.Debugf("in updateResourceUserRiskResponseStrategy")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -147,8 +147,8 @@ func updateResourceUserRiskResponseStrategy(ctx context.Context, d *schema.Resou
 	}
 
 	request := apr.UpsertUserRiskResponseStrategyRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		JsonPayload: json.RawMessage(jsonPayloadString),
 	}
 

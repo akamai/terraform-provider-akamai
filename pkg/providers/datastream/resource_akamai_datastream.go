@@ -9,13 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/datastream"
-	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/collections"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/log"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/datastream"
+	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/collections"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -23,10 +23,20 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-var (
-	// PollForActivationStatusChangeInterval defines retry interval for getting status of a pending change
-	PollForActivationStatusChangeInterval = 10 * time.Minute
+// datastreamResourceConfig holds configuration for the datastream resource, allowing tests to override
+// polling timings without relying on shared global state.
+type datastreamResourceConfig struct {
+	pollForActivationStatusChangeInterval time.Duration
+}
 
+// defaultDatastreamResourceConfig returns the production configuration for the datastream resource.
+func defaultDatastreamResourceConfig() datastreamResourceConfig {
+	return datastreamResourceConfig{
+		pollForActivationStatusChangeInterval: 10 * time.Minute,
+	}
+}
+
+var (
 	// ExactlyOneConnectorRule defines connector fields names
 	ExactlyOneConnectorRule = []string{
 		"azure_connector",
@@ -81,12 +91,12 @@ const (
 	MidgressDatasetField = 2051
 )
 
-func resourceDatastream() *schema.Resource {
+func resourceDatastream(config datastreamResourceConfig) *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceDatastreamCreate,
+		CreateContext: resourceDatastreamCreate(config),
 		ReadContext:   resourceDatastreamRead,
-		UpdateContext: resourceDatastreamUpdate,
-		DeleteContext: resourceDatastreamDelete,
+		UpdateContext: resourceDatastreamUpdate(config),
+		DeleteContext: resourceDatastreamDelete(config),
 		Timeouts: &schema.ResourceTimeout{
 			Default: &DatastreamResourceTimeout,
 		},
@@ -1255,124 +1265,127 @@ func getStreamTypeConfig(d *schema.ResourceData, logType datastream.LogType) (*s
 	return result, nil
 }
 
-func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("Datastream", "resourceDatastreamCreate")
+func resourceDatastreamCreate(resourceConfig datastreamResourceConfig) schema.CreateContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("Datastream", "resourceDatastreamCreate")
 
-	ctx = session.ContextWithOptions(
-		ctx,
-		session.WithContextLog(logger),
-	)
+		ctx = session.ContextWithOptions(
+			ctx,
+			session.WithContextLog(logger),
+		)
 
-	client := inst.Client(meta)
-	logger.Debug("Creating stream")
+		client := meta.Client().GetDataStream()
+		pollInterval := resourceConfig.pollForActivationStatusChangeInterval
+		logger.Debug("Creating stream")
 
-	logType, err := getLogType(d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	active, err := tf.GetBoolValue("active", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	collectMidgress, err := tf.GetBoolValue("collect_midgress", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	contractID, err := getContractIDForStream(d, logType)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	emailIDsList, err := tf.GetListValue("notification_emails", d)
-	if err != nil {
-		if !errors.Is(err, tf.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-	}
-	emailIDs := tf.InterfaceSliceToStringSlice(emailIDsList)
-
-	if len(emailIDs) == 0 {
-		emailIDs = nil
-	}
-
-	groupID, err := getGroupIDForStream(d, logType)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	streamFields, err := getStreamTypeConfig(d, logType)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	streamName, err := tf.GetStringValue("stream_name", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	connectors, err := GetConnectors(d, ExactlyOneConnectorRule)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	deliveryConfigSet, err := tf.GetSetValue("delivery_configuration", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	config, err := GetConfig(deliveryConfigSet)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	var httpsBaseConnectorName = GetConnectorNameWithOutFilePrefixSuffix(d, ConnectorsWithoutFilenameOptionsConfig)
-
-	config, err = FilePrefixSuffixSet(httpsBaseConnectorName, config)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	// sampling_percentage is optional, so only get it if it exists
-	var samplingPercentage int
-	if value, exists := d.GetOk("sampling_percentage"); exists {
-		samplingPercentage = value.(int)
-	}
-	req := datastream.CreateStreamRequest{
-		StreamConfiguration: datastream.StreamConfiguration{
-			CollectMidgress:       collectMidgress,
-			DeliveryConfiguration: *config,
-			Destination:           connectors,
-			ContractID:            contractID,
-			DatasetFields:         streamFields.DatasetFields,
-			NotificationEmails:    emailIDs,
-			GroupID:               groupID,
-			Properties:            streamFields.Properties,
-			StreamName:            streamName,
-			SamplingPercentage:    samplingPercentage,
-			AppSecConfigs:         streamFields.AppSecConfigs,
-			AnswerXServiceIDs:     streamFields.AnswerXServiceIDs,
-		},
-		Activate: active,
-		LogType:  logType,
-	}
-
-	res, err := client.CreateStream(ctx, req)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	streamID := res.StreamID
-	d.SetId(strconv.FormatInt(streamID, 10))
-
-	if active {
-		_, err = waitForStreamStatusChange(ctx, client, streamID, logType, datastream.StreamStatusActivated)
+		logType, err := getLogType(d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-	}
 
-	return resourceDatastreamRead(ctx, d, m)
+		active, err := tf.GetBoolValue("active", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		collectMidgress, err := tf.GetBoolValue("collect_midgress", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		contractID, err := getContractIDForStream(d, logType)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		emailIDsList, err := tf.GetListValue("notification_emails", d)
+		if err != nil {
+			if !errors.Is(err, tf.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+		}
+		emailIDs := tf.InterfaceSliceToStringSlice(emailIDsList)
+
+		if len(emailIDs) == 0 {
+			emailIDs = nil
+		}
+
+		groupID, err := getGroupIDForStream(d, logType)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		streamFields, err := getStreamTypeConfig(d, logType)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		streamName, err := tf.GetStringValue("stream_name", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		connectors, err := GetConnectors(d, ExactlyOneConnectorRule)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		deliveryConfigSet, err := tf.GetSetValue("delivery_configuration", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		config, err := GetConfig(deliveryConfigSet)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		var httpsBaseConnectorName = GetConnectorNameWithOutFilePrefixSuffix(d, ConnectorsWithoutFilenameOptionsConfig)
+
+		config, err = FilePrefixSuffixSet(httpsBaseConnectorName, config)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		// sampling_percentage is optional, so only get it if it exists
+		var samplingPercentage int
+		if value, exists := d.GetOk("sampling_percentage"); exists {
+			samplingPercentage = value.(int)
+		}
+		req := datastream.CreateStreamRequest{
+			StreamConfiguration: datastream.StreamConfiguration{
+				CollectMidgress:       collectMidgress,
+				DeliveryConfiguration: *config,
+				Destination:           connectors,
+				ContractID:            contractID,
+				DatasetFields:         streamFields.DatasetFields,
+				NotificationEmails:    emailIDs,
+				GroupID:               groupID,
+				Properties:            streamFields.Properties,
+				StreamName:            streamName,
+				SamplingPercentage:    samplingPercentage,
+				AppSecConfigs:         streamFields.AppSecConfigs,
+				AnswerXServiceIDs:     streamFields.AnswerXServiceIDs,
+			},
+			Activate: active,
+			LogType:  logType,
+		}
+
+		res, err := client.CreateStream(ctx, req)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		streamID := res.StreamID
+		d.SetId(strconv.FormatInt(streamID, 10))
+
+		if active {
+			_, err = waitForStreamStatusChange(ctx, client, streamID, logType, pollInterval, datastream.StreamStatusActivated)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+
+		return resourceDatastreamRead(ctx, d, m)
+	}
 }
 
 // FilePrefixSuffixSet clears upload file prefix/suffix before create/update for connectors
@@ -1864,7 +1877,7 @@ func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m inter
 		session.WithContextLog(logger),
 	)
 
-	client := inst.Client(meta)
+	client := meta.Client().GetDataStream()
 	logger.Debug("Reading a stream")
 
 	streamID, err := strconv.ParseInt(d.Id(), 10, 64)
@@ -2037,116 +2050,120 @@ func extractDatastreamAPIError(err error) (*datastream.Error, bool) {
 	return apiErr, true
 }
 
-func resourceDatastreamUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("Datastream", "resourceDatastreamUpdate")
+func resourceDatastreamUpdate(config datastreamResourceConfig) schema.UpdateContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("Datastream", "resourceDatastreamUpdate")
 
-	ctx = session.ContextWithOptions(
-		ctx,
-		session.WithContextLog(logger),
-	)
+		ctx = session.ContextWithOptions(
+			ctx,
+			session.WithContextLog(logger),
+		)
 
-	client := inst.Client(meta)
-	logger.Debug("Updating stream")
+		client := meta.Client().GetDataStream()
+		pollInterval := config.pollForActivationStatusChangeInterval
+		logger.Debug("Updating stream")
 
-	streamID, err := strconv.ParseInt(d.Id(), 10, 64)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	logType, err := getLogType(d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	// it is not possible to edit stream while it is (de)activating
-	currentStreamStatus, err := waitForStreamStatusChange(ctx, client, streamID, logType,
-		datastream.StreamStatusDeactivated,
-		datastream.StreamStatusActivated,
-		datastream.StreamStatusInactive,
-	)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	isStreamActive := *currentStreamStatus == datastream.StreamStatusActivated
-
-	var newActive bool
-	if d.HasChange("active") {
-		_, newActiveValue := d.GetChange("active")
-		newActive = newActiveValue.(bool)
-	} else {
-		oldActiveValue, err := tf.GetBoolValue("active", d)
+		streamID, err := strconv.ParseInt(d.Id(), 10, 64)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		newActive = oldActiveValue
-	}
 
-	if isStreamActive {
-		if newActive {
-			// stream is active and should be still active
+		logType, err := getLogType(d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
-			// update details
+		// it is not possible to edit stream while it is (de)activating
+		currentStreamStatus, err := waitForStreamStatusChange(ctx, client, streamID, logType, pollInterval,
+			datastream.StreamStatusDeactivated,
+			datastream.StreamStatusActivated,
+			datastream.StreamStatusInactive,
+		)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		isStreamActive := *currentStreamStatus == datastream.StreamStatusActivated
+
+		var newActive bool
+		if d.HasChange("active") {
+			_, newActiveValue := d.GetChange("active")
+			newActive = newActiveValue.(bool)
+		} else {
+			oldActiveValue, err := tf.GetBoolValue("active", d)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			newActive = oldActiveValue
+		}
+
+		if isStreamActive {
+			if newActive {
+				// stream is active and should be still active
+
+				// update details
+				err = updateStream(ctx, client, logger, streamID, d, isStreamActive, logType)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+
+				// wait until stream is activated because updating active stream causes its reactivation
+				logger.Debugf("waiting for stream #%d activation", streamID)
+				_, err = waitForStreamStatusChange(ctx, client, streamID, logType, pollInterval, datastream.StreamStatusActivated)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+			} else {
+				// stream is active and should be deactivated
+
+				// deactivate stream first
+				err = deactivateStream(ctx, client, logger, streamID, logType, pollInterval)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+
+				// wait until stream is deactivated
+				logger.Debugf("waiting for stream #%d deactivation", streamID)
+				_, err = waitForStreamStatusChange(ctx, client, streamID, logType, pollInterval, datastream.StreamStatusDeactivated)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+
+				// update details (no waiting needed because stream is inactive)
+				err = updateStream(ctx, client, logger, streamID, d, false, logType)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+			}
+		} else {
+			// update details (no waiting needed because stream is inactive)
+
 			err = updateStream(ctx, client, logger, streamID, d, isStreamActive, logType)
 			if err != nil {
 				return diag.FromErr(err)
 			}
 
-			// wait until stream is activated because updating active stream causes its reactivation
-			logger.Debugf("waiting for stream #%d activation", streamID)
-			_, err = waitForStreamStatusChange(ctx, client, streamID, logType, datastream.StreamStatusActivated)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-		} else {
-			// stream is active and should be deactivated
+			if newActive {
+				//stream is inactive and should be activated
 
-			// deactivate stream first
-			err = deactivateStream(ctx, client, logger, streamID, logType)
-			if err != nil {
-				return diag.FromErr(err)
-			}
+				// activate stream first
+				err = activateStream(ctx, client, logger, streamID, logType, pollInterval)
+				if err != nil {
+					return diag.FromErr(err)
+				}
 
-			// wait until stream is deactivated
-			logger.Debugf("waiting for stream #%d deactivation", streamID)
-			_, err = waitForStreamStatusChange(ctx, client, streamID, logType, datastream.StreamStatusDeactivated)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-
-			// update details (no waiting needed because stream is inactive)
-			err = updateStream(ctx, client, logger, streamID, d, false, logType)
-			if err != nil {
-				return diag.FromErr(err)
+				// wait until stream is deactivated
+				logger.Debugf("waiting for stream #%d activation", streamID)
+				_, err = waitForStreamStatusChange(ctx, client, streamID, logType, pollInterval, datastream.StreamStatusActivated)
+				if err != nil {
+					return diag.FromErr(err)
+				}
 			}
 		}
-	} else {
-		// update details (no waiting needed because stream is inactive)
 
-		err = updateStream(ctx, client, logger, streamID, d, isStreamActive, logType)
-		if err != nil {
-			return diag.FromErr(err)
-		}
+		return resourceDatastreamRead(ctx, d, m)
 
-		if newActive {
-			//stream is inactive and should be activated
-
-			// activate stream first
-			err = activateStream(ctx, client, logger, streamID, logType)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-
-			// wait until stream is deactivated
-			logger.Debugf("waiting for stream #%d activation", streamID)
-			_, err = waitForStreamStatusChange(ctx, client, streamID, logType, datastream.StreamStatusActivated)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-		}
 	}
-
-	return resourceDatastreamRead(ctx, d, m)
 }
 
 func updateStream(ctx context.Context, client datastream.DS, logger akalog.Interface, streamID int64, d *schema.ResourceData, isStreamActive bool, logType datastream.LogType) error {
@@ -2235,7 +2252,7 @@ func updateStream(ctx context.Context, client datastream.DS, logger akalog.Inter
 	return nil
 }
 
-func deactivateStream(ctx context.Context, client datastream.DS, logger akalog.Interface, streamID int64, logType datastream.LogType) error {
+func deactivateStream(ctx context.Context, client datastream.DS, logger akalog.Interface, streamID int64, logType datastream.LogType, pollInterval time.Duration) error {
 	logger.Debug("deactivating stream")
 	_, err := client.DeactivateStream(ctx, datastream.DeactivateStreamRequest{
 		StreamID: streamID,
@@ -2246,11 +2263,11 @@ func deactivateStream(ctx context.Context, client datastream.DS, logger akalog.I
 	}
 
 	logger.Debugf("waiting for the stream #%d to be deactivated", streamID)
-	_, err = waitForStreamStatusChange(ctx, client, streamID, logType, datastream.StreamStatusDeactivated)
+	_, err = waitForStreamStatusChange(ctx, client, streamID, logType, pollInterval, datastream.StreamStatusDeactivated)
 	return err
 }
 
-func activateStream(ctx context.Context, client datastream.DS, logger akalog.Interface, streamID int64, logType datastream.LogType) error {
+func activateStream(ctx context.Context, client datastream.DS, logger akalog.Interface, streamID int64, logType datastream.LogType, pollInterval time.Duration) error {
 	logger.Info("activating stream")
 	_, err := client.ActivateStream(ctx, datastream.ActivateStreamRequest{
 		StreamID: streamID,
@@ -2260,60 +2277,35 @@ func activateStream(ctx context.Context, client datastream.DS, logger akalog.Int
 		return err
 	}
 	logger.Debugf("waiting for the stream #%d to be activated", streamID)
-	_, err = waitForStreamStatusChange(ctx, client, streamID, logType, datastream.StreamStatusActivated)
+	_, err = waitForStreamStatusChange(ctx, client, streamID, logType, pollInterval, datastream.StreamStatusActivated)
 	return err
 }
 
-func resourceDatastreamDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("Datastream", "resourceDatastreamDelete")
+func resourceDatastreamDelete(config datastreamResourceConfig) schema.DeleteContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("Datastream", "resourceDatastreamDelete")
 
-	ctx = session.ContextWithOptions(
-		ctx,
-		session.WithContextLog(logger),
-	)
+		ctx = session.ContextWithOptions(
+			ctx,
+			session.WithContextLog(logger),
+		)
 
-	client := inst.Client(meta)
-	logger.Debug("Deleting stream")
+		client := meta.Client().GetDataStream()
+		pollInterval := config.pollForActivationStatusChangeInterval
+		logger.Debug("Deleting stream")
 
-	logType, err := getLogType(d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	streamID, err := strconv.ParseInt(d.Id(), 10, 64)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	streamDetails, err := client.GetStream(ctx, datastream.GetStreamRequest{
-		StreamID: streamID,
-		LogType:  logType,
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	activationStatus := streamDetails.StreamStatus
-
-	// if status == activating             - wait, deactivate, wait, delete
-	// if status == activated              - deactivate, wait, delete
-	// if status == deactivating           - wait, delete
-	// if status == deactivated/inactive   - delete
-
-	// if stream is activating we have to wait until activation finishes
-	if activationStatus == datastream.StreamStatusActivating {
-		_, err := waitForStreamStatusChange(ctx, client, streamID, logType, datastream.StreamStatusActivated)
+		logType, err := getLogType(d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		activationStatus = datastream.StreamStatusActivated
-	}
+		streamID, err := strconv.ParseInt(d.Id(), 10, 64)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
-	// if stream is active - deactivate it
-	if activationStatus == datastream.StreamStatusActivated {
-		_, err := client.DeactivateStream(ctx, datastream.DeactivateStreamRequest{
+		streamDetails, err := client.GetStream(ctx, datastream.GetStreamRequest{
 			StreamID: streamID,
 			LogType:  logType,
 		})
@@ -2321,36 +2313,65 @@ func resourceDatastreamDelete(ctx context.Context, d *schema.ResourceData, m int
 			return diag.FromErr(err)
 		}
 
-		activationStatus = datastream.StreamStatusDeactivating
-	}
+		activationStatus := streamDetails.StreamStatus
 
-	// if stream is deactivating phase - wait until it completes
-	if activationStatus == datastream.StreamStatusDeactivating {
-		_, err := waitForStreamStatusChange(ctx, client, streamID, logType, datastream.StreamStatusDeactivated)
-		if err != nil {
-			return diag.FromErr(err)
+		// if status == activating             - wait, deactivate, wait, delete
+		// if status == activated              - deactivate, wait, delete
+		// if status == deactivating           - wait, delete
+		// if status == deactivated/inactive   - delete
+
+		// if stream is activating we have to wait until activation finishes
+		if activationStatus == datastream.StreamStatusActivating {
+			_, err := waitForStreamStatusChange(ctx, client, streamID, logType, pollInterval, datastream.StreamStatusActivated)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+
+			activationStatus = datastream.StreamStatusActivated
 		}
 
-		activationStatus = datastream.StreamStatusDeactivated
-	}
+		// if stream is active - deactivate it
+		if activationStatus == datastream.StreamStatusActivated {
+			_, err := client.DeactivateStream(ctx, datastream.DeactivateStreamRequest{
+				StreamID: streamID,
+				LogType:  logType,
+			})
+			if err != nil {
+				return diag.FromErr(err)
+			}
 
-	// if stream is inactive - delete it
-	if activationStatus == datastream.StreamStatusDeactivated || activationStatus == datastream.StreamStatusInactive {
-		err := client.DeleteStream(ctx, datastream.DeleteStreamRequest{
-			StreamID: streamID,
-			LogType:  logType,
-		})
-
-		if err != nil {
-			return diag.FromErr(err)
+			activationStatus = datastream.StreamStatusDeactivating
 		}
-	}
 
-	d.SetId("")
-	return nil
+		// if stream is deactivating phase - wait until it completes
+		if activationStatus == datastream.StreamStatusDeactivating {
+			_, err := waitForStreamStatusChange(ctx, client, streamID, logType, pollInterval, datastream.StreamStatusDeactivated)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+
+			activationStatus = datastream.StreamStatusDeactivated
+		}
+
+		// if stream is inactive - delete it
+		if activationStatus == datastream.StreamStatusDeactivated || activationStatus == datastream.StreamStatusInactive {
+			err := client.DeleteStream(ctx, datastream.DeleteStreamRequest{
+				StreamID: streamID,
+				LogType:  logType,
+			})
+
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+
+		d.SetId("")
+		return nil
+
+	}
 }
 
-func waitForStreamStatusChange(ctx context.Context, client datastream.DS, streamID int64, logType datastream.LogType, expectedStatuses ...datastream.StreamStatus) (*datastream.StreamStatus, error) {
+func waitForStreamStatusChange(ctx context.Context, client datastream.DS, streamID int64, logType datastream.LogType, pollInterval time.Duration, expectedStatuses ...datastream.StreamStatus) (*datastream.StreamStatus, error) {
 	expectedStatusesMap := map[datastream.StreamStatus]bool{}
 	for _, status := range expectedStatuses {
 		expectedStatusesMap[status] = true
@@ -2369,7 +2390,7 @@ func waitForStreamStatusChange(ctx context.Context, client datastream.DS, stream
 	_, ok := expectedStatusesMap[streamDetails.StreamStatus]
 	for ; !ok; _, ok = expectedStatusesMap[streamDetails.StreamStatus] {
 		select {
-		case <-time.After(PollForActivationStatusChangeInterval):
+		case <-time.After(pollInterval):
 			streamDetails, err = client.GetStream(ctx, getStreamReq)
 			if err != nil {
 				return nil, err

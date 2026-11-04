@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"strconv"
 
-	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/accountprotection"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/accountprotection"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -35,7 +35,7 @@ func readDataSourceUserRiskResponseStrategy(ctx context.Context, d *schema.Resou
 	logger := meta.Log("accountprotection", "readDataSourceUserRiskResponseStrategy")
 	logger.Debugf("in readDataSourceUserRiskResponseStrategy")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -46,8 +46,8 @@ func readDataSourceUserRiskResponseStrategy(ctx context.Context, d *schema.Resou
 	}
 
 	request := apr.GetUserRiskResponseStrategyRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 	}
 
 	response, err := client.GetUserRiskResponseStrategy(ctx, request)
@@ -65,6 +65,6 @@ func readDataSourceUserRiskResponseStrategy(ctx context.Context, d *schema.Resou
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 	return nil
 }

@@ -7,12 +7,12 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/log"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/date"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/id"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/date"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -76,15 +76,10 @@ func resourceActivations(config activationResourceConfig) *schema.Resource {
 	}
 }
 
-const (
-	// ActivationPollMinimum is the minimum polling interval for activation creation
-	ActivationPollMinimum = time.Minute
-)
-
 // activationParams contains the parameters for activation and deactivation operations, used by helper methods
 type activationParams struct {
-	ConfigID           int
-	Version            int
+	ConfigID           int64
+	Version            int64
 	Network            string
 	Note               string
 	NotificationEmails []string
@@ -94,8 +89,9 @@ type activationParams struct {
 }
 
 type activationResourceConfig struct {
-	// activationPollInterval is the interval for polling an activation status on creation
-	activationPollInterval time.Duration
+	// pollTimeUnit scales all poll intervals. Defaults to time.Minute when zero.
+	// Set to a smaller value (e.g. time.Millisecond) in tests.
+	pollTimeUnit time.Duration
 
 	// appsecResourceTimeout is the default timeout for the resource operations
 	appsecResourceTimeout time.Duration
@@ -104,11 +100,32 @@ type activationResourceConfig struct {
 	createActivationRetry time.Duration
 }
 
+// pollInterval returns how long to wait before the next poll.
+// Schedule: 2 units × 3 (0–6 units), then 1 unit × 4 (6–10 units), then 3 units thereafter.
+// pollTimeUnit defaults to time.Minute; tests set it smaller to avoid real waits.
+func (c activationResourceConfig) pollInterval(attemptIndex int) time.Duration {
+	unit := c.pollTimeUnit
+	// production code never has to explicitly set pollTimeUnit.
+	if unit == 0 {
+		unit = time.Minute
+	}
+	switch {
+	// attempts 0, 1, 2. In production: 2 minutes each → covers first 6 minutes of waiting.
+	case attemptIndex < 3:
+		return 2 * unit
+	// attempts 3, 4, 5, 6. In production: 1 minute each → covers next 4 minutes of waiting (total 10 minutes).
+	case attemptIndex < 7:
+		return 1 * unit
+	// attempts 7 and beyond. In production: 3 minutes each.
+	default:
+		return 3 * unit
+	}
+}
+
 func defaultActivationResourceConfig() activationResourceConfig {
 	return activationResourceConfig{
-		activationPollInterval: ActivationPollMinimum,
-		appsecResourceTimeout:  90 * time.Minute,
-		createActivationRetry:  10 * time.Second,
+		appsecResourceTimeout: 90 * time.Minute,
+		createActivationRetry: 10 * time.Second,
 	}
 }
 
@@ -119,11 +136,11 @@ func resourceActivationsCreate(config activationResourceConfig) schema.CreateCon
 		logger := meta.Log("APPSEC", "resourceActivationsCreate")
 		logger.Debug("in resourceActivationsCreate")
 
-		configID, err := tf.GetIntValue("config_id", d)
+		configID, err := tf.GetIntValueAsInt64("config_id", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := tf.GetIntValue("version", d)
+		version, err := tf.GetIntValueAsInt64("version", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -171,7 +188,7 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 	logger.Debug("in resourceActivationsRead")
 
 	// Get config ID and network from resource state
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -221,11 +238,11 @@ func resourceActivationsUpdate(config activationResourceConfig) schema.UpdateCon
 		logger := meta.Log("APPSEC", "resourceActivationsUpdate")
 		logger.Debug("in resourceActivationsUpdate")
 
-		configID, err := tf.GetIntValue("config_id", d)
+		configID, err := tf.GetIntValueAsInt64("config_id", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := tf.GetIntValue("version", d)
+		version, err := tf.GetIntValueAsInt64("version", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -274,12 +291,12 @@ func resourceActivationsDelete(config activationResourceConfig) schema.DeleteCon
 		logger.Debug("in resourceActivationsDelete")
 
 		// Get the config values from state
-		configID, err := tf.GetIntValue("config_id", d)
+		configID, err := tf.GetIntValueAsInt64("config_id", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		version, err := tf.GetIntValue("version", d)
+		version, err := tf.GetIntValueAsInt64("version", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -331,11 +348,11 @@ func resourceImporter(ctx context.Context, d *schema.ResourceData, m interface{}
 	if err != nil {
 		return nil, err
 	}
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return nil, err
 	}
-	version, err := strconv.Atoi(iDParts[1])
+	version, err := strconv.ParseInt(iDParts[1], 10, 64)
 	if err != nil {
 		return nil, err
 	}
@@ -456,34 +473,50 @@ func createActivation(ctx context.Context, client appsec.APPSEC, request appsec.
 	return result, err
 }
 
-func pollActivation(ctx context.Context, client appsec.APPSEC, activationStatus appsec.StatusValue, getActivationsRequest appsec.GetActivationsRequest, config activationResourceConfig) (appsec.StatusValue, error) {
+func pollActivationWithBackoff(ctx context.Context, client appsec.APPSEC, activationStatus appsec.StatusValue, getActivationsRequest appsec.GetActivationsRequest, config activationResourceConfig, logger akalog.Interface) (appsec.StatusValue, error) {
 	retriesMax := 5
 	retries5xx := 0
+	pollIndex := 0
+	shouldSkipWait := false
 
 	for activationStatus != appsec.StatusActive && activationStatus != appsec.StatusAborted && activationStatus != appsec.StatusFailed {
-		select {
-		case <-time.After(tf.MaxDuration(config.activationPollInterval, ActivationPollMinimum)):
-			act, err := client.GetActivations(ctx, getActivationsRequest)
-			if err != nil {
-				var target = &appsec.Error{}
-				if !errors.As(err, &target) {
-					return "", fmt.Errorf("error has unexpected type: %T", err)
-				}
-				if isCreateActivationErrorRetryable(target) {
-					retries5xx = retries5xx + 1
-					if retries5xx > retriesMax {
-						return "", fmt.Errorf("reached max number of 5xx retries: %d", retries5xx)
-					}
-					continue
-				}
-				return "", err
+		if !shouldSkipWait {
+			waitDuration := config.pollInterval(pollIndex)
+			logger.Debugf("activation poll attempt %d: waiting %s before next status check (status: %s)", pollIndex, waitDuration, activationStatus)
+			select {
+			case <-time.After(waitDuration):
+			case <-ctx.Done():
+				return "", fmt.Errorf("activation context terminated: %s", ctx.Err())
 			}
-			retries5xx = 0
-			activationStatus = act.Status
-
-		case <-ctx.Done():
-			return "", fmt.Errorf("activation context terminated: %s", ctx.Err())
 		}
+		shouldSkipWait = false
+
+		act, err := client.GetActivations(ctx, getActivationsRequest)
+		if err != nil {
+			var target = &appsec.Error{}
+			if !errors.As(err, &target) {
+				return "", fmt.Errorf("error has unexpected type: %T", err)
+			}
+			if isCreateActivationErrorRetryable(target) {
+				retries5xx = retries5xx + 1
+				if retries5xx > retriesMax {
+					return "", fmt.Errorf("reached max number of 5xx retries: %d", retries5xx)
+				}
+				// Wait only the short retry delay, then poll again immediately
+				// without waiting the full poll interval (shouldSkipWait = true).
+				select {
+				case <-time.After(config.createActivationRetry):
+				case <-ctx.Done():
+					return "", fmt.Errorf("activation context terminated: %s", ctx.Err())
+				}
+				shouldSkipWait = true
+				continue
+			}
+			return "", err
+		}
+		retries5xx = 0
+		activationStatus = act.Status
+		pollIndex++
 	}
 
 	if activationStatus == appsec.StatusFailed {
@@ -506,13 +539,13 @@ func isCreateActivationErrorRetryable(err error) bool {
 }
 
 // generateHostMoveWarning creates a warning message for host move operations
-func generateHostMoveWarning(hostsToMove []appsec.HostToMove, currentConfigID int) diag.Diagnostic {
+func generateHostMoveWarning(hostsToMove []appsec.HostToMove, currentConfigID int64) diag.Diagnostic {
 	if len(hostsToMove) == 0 {
 		return diag.Diagnostic{}
 	}
 
 	var hostnames []string
-	var sourceConfigID int
+	var sourceConfigID int64
 
 	for _, host := range hostsToMove {
 		hostnames = append(hostnames, host.Host)
@@ -541,8 +574,8 @@ func generateHostMoveWarning(hostsToMove []appsec.HostToMove, currentConfigID in
 func createActivationWithValidation(
 	ctx context.Context,
 	client appsec.APPSEC,
-	configID int,
-	version int,
+	configID int64,
+	version int64,
 	network string,
 	note string,
 	notificationEmails []string,
@@ -591,8 +624,8 @@ func createActivationWithValidation(
 func activateWithHostMove(
 	ctx context.Context,
 	client appsec.APPSEC,
-	configID int,
-	version int,
+	configID int64,
+	version int64,
 	network string,
 	note string,
 	notificationEmails []string,
@@ -635,8 +668,8 @@ func activateWithHostMove(
 func activate(
 	ctx context.Context,
 	client appsec.APPSEC,
-	configID int,
-	version int,
+	configID int64,
+	version int64,
 	network string,
 	note string,
 	notificationEmails []string,
@@ -648,7 +681,7 @@ func activate(
 		Note:               note,
 		NotificationEmails: notificationEmails,
 	}
-	createActivationRequest.ActivationConfigs = append(createActivationRequest.ActivationConfigs, appsec.ActivationConfigs{
+	createActivationRequest.ActivationConfigs = append(createActivationRequest.ActivationConfigs, appsec.ActivationConfigRequestItem{
 		ConfigID:      configID,
 		ConfigVersion: version,
 	})
@@ -672,7 +705,7 @@ func validateSingleSourceConfig(hostsToMove []appsec.HostToMove) error {
 }
 
 // findCurrentActiveVersion finds the currently active version for a config and network
-func findCurrentActiveVersion(ctx context.Context, client appsec.APPSEC, configID int, network string) (*appsec.Activation, error) {
+func findCurrentActiveVersion(ctx context.Context, client appsec.APPSEC, configID int64, network string) (*appsec.Activation, error) {
 	request := appsec.GetActivationHistoryRequest{
 		ConfigID: configID,
 	}
@@ -701,7 +734,7 @@ func findCurrentActiveVersion(ctx context.Context, client appsec.APPSEC, configI
 }
 
 // findCurrentActiveOrPendingVersion finds the currently active or pending version for a config and network
-func findCurrentActiveOrPendingVersion(ctx context.Context, client appsec.APPSEC, configID int, network string) (*appsec.Activation, error) {
+func findCurrentActiveOrPendingVersion(ctx context.Context, client appsec.APPSEC, configID int64, network string) (*appsec.Activation, error) {
 	request := appsec.GetActivationHistoryRequest{
 		ConfigID: configID,
 	}
@@ -734,7 +767,7 @@ func findCurrentActiveOrPendingVersion(ctx context.Context, client appsec.APPSEC
 }
 
 // findCurrentActiveOrPendingDeactivation finds active versions or pending deactivations for a config and network
-func findCurrentActiveOrPendingDeactivation(ctx context.Context, client appsec.APPSEC, configID int, network string, logger akalog.Interface) (*appsec.Activation, error) {
+func findCurrentActiveOrPendingDeactivation(ctx context.Context, client appsec.APPSEC, configID int64, network string, logger akalog.Interface) (*appsec.Activation, error) {
 	request := appsec.GetActivationHistoryRequest{
 		ConfigID: configID,
 	}
@@ -852,7 +885,7 @@ func handleSameVersion(ctx context.Context, client appsec.APPSEC, currentVersion
 	getActivationsRequest := appsec.GetActivationsRequest{
 		ActivationID: currentVersion.ActivationID,
 	}
-	finalStatus, err := pollActivation(ctx, client, appsec.StatusValue(currentVersion.Status), getActivationsRequest, config)
+	finalStatus, err := pollActivationWithBackoff(ctx, client, appsec.StatusValue(currentVersion.Status), getActivationsRequest, config, params.Logger)
 	if err != nil {
 		// Refresh state to current active version before returning error
 		params.Logger.Warnf("activation polling failed for version %d on %s for config %d, refreshing state to current active version: %s", params.Version, params.Network, params.ConfigID, err.Error())
@@ -921,7 +954,7 @@ func performActivation(ctx context.Context, client appsec.APPSEC, params activat
 		return diag.FromErr(err)
 	}
 
-	finalStatus, err := pollActivation(ctx, client, activation.Status, getActivationsRequest, config)
+	finalStatus, err := pollActivationWithBackoff(ctx, client, activation.Status, getActivationsRequest, config, params.Logger)
 	if err != nil {
 		params.Logger.Warnf("activation polling failed for version %d on %s for config %d, refreshing state to current active version: %s", params.Version, params.Network, params.ConfigID, err.Error())
 		return handleActivationFailure(ctx, params, finalStatus)
@@ -990,9 +1023,14 @@ func waitForDeactivation(ctx context.Context, client appsec.APPSEC, currentVersi
 		return diag.FromErr(err)
 	}
 
+	unit := config.pollTimeUnit
+	if unit == 0 {
+		unit = time.Minute
+	}
+
 	for activation.Status != appsec.StatusDeactivated && activation.Status != appsec.StatusAborted && activation.Status != appsec.StatusFailed {
 		select {
-		case <-time.After(tf.MaxDuration(config.activationPollInterval, ActivationPollMinimum)):
+		case <-time.After(unit):
 			act, err := client.GetActivations(ctx, getActivationsRequest)
 			if err != nil {
 				return diag.FromErr(err)
@@ -1020,7 +1058,7 @@ func performDeactivation(ctx context.Context, client appsec.APPSEC, activationID
 		Note:               params.Note,
 		NotificationEmails: params.NotificationEmails,
 	}
-	removeActivationRequest.ActivationConfigs = append(removeActivationRequest.ActivationConfigs, appsec.ActivationConfigs{
+	removeActivationRequest.ActivationConfigs = append(removeActivationRequest.ActivationConfigs, appsec.ActivationConfigRequestItem{
 		ConfigID:      params.ConfigID,
 		ConfigVersion: params.Version,
 	})
@@ -1045,9 +1083,14 @@ func performDeactivation(ctx context.Context, client appsec.APPSEC, activationID
 		return diag.FromErr(err)
 	}
 
+	unit := config.pollTimeUnit
+	if unit == 0 {
+		unit = time.Minute
+	}
+
 	for activation.Status != appsec.StatusDeactivated && activation.Status != appsec.StatusAborted && activation.Status != appsec.StatusFailed {
 		select {
-		case <-time.After(tf.MaxDuration(config.activationPollInterval, ActivationPollMinimum)):
+		case <-time.After(unit):
 			act, err := client.GetActivations(ctx, getActivationsRequest)
 			if err != nil {
 				return diag.FromErr(err)

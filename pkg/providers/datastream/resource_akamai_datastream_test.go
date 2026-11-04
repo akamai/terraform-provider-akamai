@@ -6,11 +6,11 @@ import (
 	"regexp"
 	"strconv"
 	"testing"
-	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/datastream"
-	tst "github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	tst "github.com/akamai/terraform-provider-akamai/v12/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -40,15 +40,11 @@ const (
 	streamID = int64(12321)
 )
 
-func init() {
-	PollForActivationStatusChangeInterval = 1 * time.Millisecond
-}
-
 func TestResourceStream(t *testing.T) {
 	t.Parallel()
 	t.Run("lifecycle test", func(t *testing.T) {
 		t.Parallel()
-		client := &datastream.Mock{}
+		client := edgegrid.NewTestClient()
 
 		streamConfiguration := datastream.StreamConfiguration{
 			CollectMidgress: false,
@@ -348,11 +344,11 @@ func TestResourceStream(t *testing.T) {
 			LogType:  datastream.LogTypeCDN,
 		}
 
-		client.On("CreateStream", testutils.MockContext, createStreamRequest).
+		client.DataStream.On("CreateStream", testutils.MockContext, createStreamRequest).
 			Return(updateStreamResponse, nil)
 
 		// for waitForStreamStatusChange
-		client.On("GetStream", testutils.MockContext, getStreamRequest).
+		client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 			Return(getStreamResponseStreamActivating, nil).
 			Times(3)
 
@@ -360,32 +356,32 @@ func TestResourceStream(t *testing.T) {
 		// second for complete CreateStream
 		// third for reading resource state
 		// fourth for reading stream status in UpdateStream
-		client.On("GetStream", testutils.MockContext, getStreamRequest).
+		client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 			Return(getStreamResponseActivated, nil).
 			Times(4)
 
-		client.On("UpdateStream", testutils.MockContext, updateStreamRequest).
+		client.DataStream.On("UpdateStream", testutils.MockContext, updateStreamRequest).
 			Return(updateStreamResponse, nil).
 			Once()
 
 		// for waitForStreamStatusChange
-		client.On("GetStream", testutils.MockContext, getStreamRequest).
+		client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 			Return(getStreamResponseStreamActivatedAfterUpdate, nil).
 			Times(3)
 
 		// first for finishing waitForStreamStatusChange in UpdateStream
 		// second for reading resource state after UpdateStream
 		// third for reading stream status in DeleteStream
-		client.On("GetStream", testutils.MockContext, getStreamRequest).
+		client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 			Return(getStreamResponseStreamActivatedAfterUpdate, nil).
 			Times(3)
 
-		client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
+		client.DataStream.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 			StreamID: streamID,
 			LogType:  datastream.LogTypeCDN,
 		}).Return(' ', nil).Once()
 
-		client.On("DeactivateStream", testutils.MockContext, datastream.DeactivateStreamRequest{
+		client.DataStream.On("DeactivateStream", testutils.MockContext, datastream.DeactivateStreamRequest{
 			StreamID: 12321,
 			LogType:  datastream.LogTypeCDN,
 		}).Return(&datastream.DetailedStreamVersion{
@@ -394,94 +390,92 @@ func TestResourceStream(t *testing.T) {
 		}, nil).Once()
 
 		// for waitForStreamStatusChange
-		client.On("GetStream", testutils.MockContext, getStreamRequest).
+		client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 			Return(getStreamResponseDeactivating, nil).
 			Times(3)
 
 		// for finishing waitForStreamStatusChange
-		client.On("GetStream", testutils.MockContext, getStreamRequest).
+		client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 			Return(getStreamResponseDeactivated, nil).
 			Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_datastream.s", "id", strconv.FormatInt(streamID, 10)),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "active", "true"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "collect_midgress", "false"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.#", "1"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.field_delimiter", string(datastream.DelimiterTypeSpace)),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.format", string(datastream.FormatTypeStructured)),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.upload_file_prefix", "pre"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.upload_file_suffix", "suf"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.frequency.#", "1"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.frequency.0.interval_in_secs", "30"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields.#", "4"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields.0", "1001"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields.1", "1002"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields.2", "2000"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields.3", "2001"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "notification_emails.#", "2"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "notification_emails.0", "test_email1@akamai.com"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "notification_emails.1", "test_email2@akamai.com"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "properties.#", "3"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "stream_name", "test_stream"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.#", "1"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.access_key", "s3_test_access_key"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.bucket", "s3_test_bucket"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.display_name", "s3_test_connector_name"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.path", "s3_test_path"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.region", "s3_test_region"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.secret_access_key", "s3_test_secret_key"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "integration_type", "PM_DEPENDENT"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/update_stream.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_datastream.s", "id", strconv.FormatInt(streamID, 10)),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "active", "true"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "collect_midgress", "false"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.#", "1"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.field_delimiter", string(datastream.DelimiterTypeSpace)),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.format", string(datastream.FormatTypeStructured)),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.upload_file_prefix", "prefix_updated"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.upload_file_suffix", "suf_updated"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.frequency.#", "1"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.frequency.0.interval_in_secs", "30"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields.#", "4"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields.0", "2000"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields.1", "1002"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields.2", "2001"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields.3", "1001"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "notification_emails.#", "2"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "notification_emails.0", "test_email1_updated@akamai.com"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "notification_emails.1", "test_email2@akamai.com"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "properties.#", "3"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "stream_name", "test_stream_with_updated"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.#", "1"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.access_key", "s3_test_access_key"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.bucket", "s3_test_bucket_updated"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.display_name", "s3_test_connector_name_updated"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.path", "s3_test_path"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.region", "s3_test_region"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.secret_access_key", "s3_test_secret_key"),
-							resource.TestCheckResourceAttr("akamai_datastream.s", "integration_type", "PM_DEPENDENT"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_datastream.s", "id", strconv.FormatInt(streamID, 10)),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "active", "true"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "collect_midgress", "false"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.#", "1"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.field_delimiter", string(datastream.DelimiterTypeSpace)),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.format", string(datastream.FormatTypeStructured)),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.upload_file_prefix", "pre"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.upload_file_suffix", "suf"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.frequency.#", "1"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.frequency.0.interval_in_secs", "30"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields.#", "4"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields.0", "1001"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields.1", "1002"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields.2", "2000"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields.3", "2001"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "notification_emails.#", "2"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "notification_emails.0", "test_email1@akamai.com"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "notification_emails.1", "test_email2@akamai.com"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "properties.#", "3"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "stream_name", "test_stream"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.#", "1"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.access_key", "s3_test_access_key"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.bucket", "s3_test_bucket"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.display_name", "s3_test_connector_name"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.path", "s3_test_path"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.region", "s3_test_region"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.secret_access_key", "s3_test_secret_key"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "integration_type", "PM_DEPENDENT"),
+					),
 				},
-			})
-
-			client.AssertExpectations(t)
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/update_stream.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_datastream.s", "id", strconv.FormatInt(streamID, 10)),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "active", "true"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "collect_midgress", "false"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.#", "1"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.field_delimiter", string(datastream.DelimiterTypeSpace)),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.format", string(datastream.FormatTypeStructured)),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.upload_file_prefix", "prefix_updated"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.upload_file_suffix", "suf_updated"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.frequency.#", "1"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.frequency.0.interval_in_secs", "30"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields.#", "4"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields.0", "2000"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields.1", "1002"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields.2", "2001"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "dataset_fields.3", "1001"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "notification_emails.#", "2"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "notification_emails.0", "test_email1_updated@akamai.com"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "notification_emails.1", "test_email2@akamai.com"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "properties.#", "3"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "stream_name", "test_stream_with_updated"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.#", "1"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.access_key", "s3_test_access_key"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.bucket", "s3_test_bucket_updated"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.display_name", "s3_test_connector_name_updated"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.path", "s3_test_path"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.region", "s3_test_region"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.secret_access_key", "s3_test_secret_key"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "integration_type", "PM_DEPENDENT"),
+					),
+				},
+			},
 		})
+
+		client.DataStream.AssertExpectations(t)
 	})
 }
 
@@ -689,8 +683,8 @@ func TestResourceUpdate(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			m := &datastream.Mock{}
-			m.On("CreateStream", testutils.MockContext, createStreamRequestFactory(test.CreateStreamActive)).
+			m := edgegrid.NewTestClient()
+			m.DataStream.On("CreateStream", testutils.MockContext, createStreamRequestFactory(test.CreateStreamActive)).
 				Return(updateStreamResponse, nil).
 				Once()
 
@@ -698,14 +692,14 @@ func TestResourceUpdate(t *testing.T) {
 			if test.CreateStreamActive {
 				createStreamFilenameSuffix = "active"
 
-				configureMock(m, []mockConfig{
+				configureMock(m.DataStream, []mockConfig{
 					{status: datastream.StreamStatusActivating, repeats: 1},
 					{status: datastream.StreamStatusActivated, repeats: 5},
 				}...)
 			} else {
 				createStreamFilenameSuffix = "inactive"
 
-				configureMock(m, []mockConfig{
+				configureMock(m.DataStream, []mockConfig{
 					{status: datastream.StreamStatusInactive, repeats: 6},
 				}...)
 			}
@@ -714,19 +708,19 @@ func TestResourceUpdate(t *testing.T) {
 				updateStreamFilenameSuffix = "active"
 
 				if test.CreateStreamActive {
-					configureMock(m, []mockConfig{
+					configureMock(m.DataStream, []mockConfig{
 						{status: datastream.StreamStatusActivated, repeats: 2},
 						{status: datastream.StreamStatusActivating, repeats: 1},
 						{status: datastream.StreamStatusActivated, repeats: 3},
 					}...)
 				} else {
-					m.On("ActivateStream", testutils.MockContext, activateStreamRequest).
+					m.DataStream.On("ActivateStream", testutils.MockContext, activateStreamRequest).
 						Return(&datastream.DetailedStreamVersion{
 							StreamVersion: updateStreamResponse.StreamVersion,
 						}, nil).
 						Once()
 
-					configureMock(m, []mockConfig{
+					configureMock(m.DataStream, []mockConfig{
 						{status: datastream.StreamStatusActivating, repeats: 1},
 						{status: datastream.StreamStatusActivated, repeats: 5},
 					}...)
@@ -735,7 +729,7 @@ func TestResourceUpdate(t *testing.T) {
 				updateStreamFilenameSuffix = "inactive"
 
 				if test.CreateStreamActive {
-					configureMock(m, []mockConfig{
+					configureMock(m.DataStream, []mockConfig{
 						{status: datastream.StreamStatusActivated, repeats: 2},
 						{status: datastream.StreamStatusDeactivating, repeats: 1},
 						{status: datastream.StreamStatusDeactivated, repeats: 4},
@@ -744,45 +738,43 @@ func TestResourceUpdate(t *testing.T) {
 			}
 
 			// DeleteStream method will deactivate the stream
-			m.On("DeactivateStream", testutils.MockContext, deactivateStreamRequest).
+			m.DataStream.On("DeactivateStream", testutils.MockContext, deactivateStreamRequest).
 				Return(&datastream.DetailedStreamVersion{
 					StreamVersion: updateStreamResponse.StreamVersion,
 				}, nil).
 				Once()
 
 			// waitForStreamStatusChange in DeleteStream
-			configureMock(m, []mockConfig{
+			configureMock(m.DataStream, []mockConfig{
 				{status: datastream.StreamStatusDeactivating, repeats: 1},
 				{status: datastream.StreamStatusDeactivated, repeats: 1},
 			}...)
 
-			m.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+			m.DataStream.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
 				Return(' ', nil).
 				Once()
 
-			useClient(m, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/update_resource/create_stream_%s.tf", createStreamFilenameSuffix),
-							Check: resource.ComposeTestCheckFunc(
-								commonChecks,
-								resource.TestCheckResourceAttr("akamai_datastream.s", "active", strconv.FormatBool(test.CreateStreamActive)),
-							),
-						},
-						{
-							Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/update_resource/update_stream_%s.tf", updateStreamFilenameSuffix),
-							Check: resource.ComposeTestCheckFunc(
-								commonChecks,
-								resource.TestCheckResourceAttr("akamai_datastream.s", "active", strconv.FormatBool(test.UpdateStreamActive)),
-							),
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(m, newSubproviderWithConfig(testSubproviderConfig())),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/update_resource/create_stream_%s.tf", createStreamFilenameSuffix),
+						Check: resource.ComposeTestCheckFunc(
+							commonChecks,
+							resource.TestCheckResourceAttr("akamai_datastream.s", "active", strconv.FormatBool(test.CreateStreamActive)),
+						),
 					},
-				})
-
-				m.AssertExpectations(t)
+					{
+						Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/update_resource/update_stream_%s.tf", updateStreamFilenameSuffix),
+						Check: resource.ComposeTestCheckFunc(
+							commonChecks,
+							resource.TestCheckResourceAttr("akamai_datastream.s", "active", strconv.FormatBool(test.UpdateStreamActive)),
+						),
+					},
+				},
 			})
+
+			m.DataStream.AssertExpectations(t)
 		})
 	}
 }
@@ -826,7 +818,7 @@ func optionalCDNStreamConfiguration(streamName string) datastream.StreamConfigur
 
 func TestResourceStreamOptionalContractAndGroup(t *testing.T) {
 	t.Parallel()
-	client := &datastream.Mock{}
+	client := edgegrid.NewTestClient()
 
 	// reusable response for GetStream – no contractId / groupId
 	// fields must match the fixture exactly to produce an empty plan
@@ -884,45 +876,43 @@ func TestResourceStreamOptionalContractAndGroup(t *testing.T) {
 	}
 
 	// create
-	client.On("CreateStream", testutils.MockContext, createStreamRequest).
+	client.DataStream.On("CreateStream", testutils.MockContext, createStreamRequest).
 		Return(&datastream.DetailedStreamVersion{StreamID: streamID}, nil).
 		Once()
 
 	// read (after create and post-apply refresh)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamResp, nil).
 		Times(2)
 	// read (delete pre-check)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamResp, nil).
 		Once()
 
 	// delete
-	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+	client.DataStream.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
 		Return(nil).
 		Once()
 
-	useClient(client, func() {
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-			Steps: []resource.TestStep{
-				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_optional_ids.tf"),
-					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", ""),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", ""),
-					),
-				},
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+		Steps: []resource.TestStep{
+			{
+				Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_optional_ids.tf"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", ""),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", ""),
+				),
 			},
-		})
+		},
 	})
 
-	client.AssertExpectations(t)
+	client.DataStream.AssertExpectations(t)
 }
 
 func TestResourceStreamOptionalContractAndGroup_populatedFromAPI(t *testing.T) {
 	t.Parallel()
-	client := &datastream.Mock{}
+	client := edgegrid.NewTestClient()
 
 	// Config omits contract_id/group_id; API returns them — Computed must store API values.
 	getStreamResp := &datastream.DetailedStreamVersion{
@@ -981,45 +971,43 @@ func TestResourceStreamOptionalContractAndGroup_populatedFromAPI(t *testing.T) {
 	}
 
 	// create
-	client.On("CreateStream", testutils.MockContext, createStreamRequest).
+	client.DataStream.On("CreateStream", testutils.MockContext, createStreamRequest).
 		Return(&datastream.DetailedStreamVersion{StreamID: streamID}, nil).
 		Once()
 
 	// read (after create and post-apply refresh)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamResp, nil).
 		Times(2)
 	// read (delete pre-check)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamResp, nil).
 		Once()
 
 	// delete
-	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+	client.DataStream.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
 		Return(nil).
 		Once()
 
-	useClient(client, func() {
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-			Steps: []resource.TestStep{
-				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_optional_ids.tf"),
-					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "api_contract"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
-					),
-				},
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+		Steps: []resource.TestStep{
+			{
+				Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_optional_ids.tf"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "api_contract"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
+				),
 			},
-		})
+		},
 	})
 
-	client.AssertExpectations(t)
+	client.DataStream.AssertExpectations(t)
 }
 
 func TestResourceStreamContractAndGroupPreservedWhenAPIOmitsOnRead(t *testing.T) {
 	t.Parallel()
-	client := &datastream.Mock{}
+	client := edgegrid.NewTestClient()
 
 	streamConfiguration := optionalCDNStreamConfiguration("test_stream")
 	streamConfiguration.ContractID = "test_contract"
@@ -1073,51 +1061,49 @@ func TestResourceStreamContractAndGroupPreservedWhenAPIOmitsOnRead(t *testing.T)
 	}
 
 	// create
-	client.On("CreateStream", testutils.MockContext, createStreamRequest).
+	client.DataStream.On("CreateStream", testutils.MockContext, createStreamRequest).
 		Return(&datastream.DetailedStreamVersion{StreamID: streamID}, nil).
 		Once()
 
 	// read (after create and post-apply refresh)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamResp, nil).
 		Times(2)
 	// read (plan-only refresh and delete pre-check)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamResp, nil).
 		Times(2)
 
 	// delete
-	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+	client.DataStream.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
 		Return(nil).
 		Once()
 
 	tfConfig := testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_inactive.tf")
 
-	useClient(client, func() {
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-			Steps: []resource.TestStep{
-				{
-					Config: tfConfig,
-					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
-					),
-				},
-				{
-					Config:   tfConfig,
-					PlanOnly: true,
-				},
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+		Steps: []resource.TestStep{
+			{
+				Config: tfConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
+				),
 			},
-		})
+			{
+				Config:   tfConfig,
+				PlanOnly: true,
+			},
+		},
 	})
 
-	client.AssertExpectations(t)
+	client.DataStream.AssertExpectations(t)
 }
 
 func TestResourceImportContractAndGroupPreservedWhenAPIOmitsOnRead(t *testing.T) {
 	t.Parallel()
-	client := &datastream.Mock{}
+	client := edgegrid.NewTestClient()
 
 	streamConfiguration := optionalCDNStreamConfiguration("test_stream")
 	streamConfiguration.ContractID = "test_contract"
@@ -1166,14 +1152,14 @@ func TestResourceImportContractAndGroupPreservedWhenAPIOmitsOnRead(t *testing.T)
 	}
 
 	// read (import refresh)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamResp, nil).
 		Once()
 	// read (delete pre-check)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamResp, nil).
 		Once()
-	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+	client.DataStream.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
 		Return(nil).
 		Once()
 
@@ -1182,33 +1168,31 @@ func TestResourceImportContractAndGroupPreservedWhenAPIOmitsOnRead(t *testing.T)
 	// RES-10: import refresh must preserve contract_id/group_id from config when the API omits them.
 	// Post-import empty plan is also covered by TestResourceStreamContractAndGroupPreservedWhenAPIOmitsOnRead
 	// and TestResourceStreamI775NoDriftWhenAPIOmitsFieldsOnRefresh (apply + PlanOnly refresh path).
-	useClient(client, func() {
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-			Steps: []resource.TestStep{
-				{
-					Config:             tfConfig,
-					ResourceName:       "akamai_datastream.s",
-					ImportState:        true,
-					ImportStateId:      strconv.FormatInt(streamID, 10),
-					ImportStateVerify:  false,
-					ImportStatePersist: true,
-					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_datastream.s", "id", strconv.FormatInt(streamID, 10)),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
-					),
-				},
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+		Steps: []resource.TestStep{
+			{
+				Config:             tfConfig,
+				ResourceName:       "akamai_datastream.s",
+				ImportState:        true,
+				ImportStateId:      strconv.FormatInt(streamID, 10),
+				ImportStateVerify:  false,
+				ImportStatePersist: true,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("akamai_datastream.s", "id", strconv.FormatInt(streamID, 10)),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
+				),
 			},
-		})
+		},
 	})
 
-	client.AssertExpectations(t)
+	client.DataStream.AssertExpectations(t)
 }
 
 func TestResourceImportUploadFilePrefixPreservedWhenAPIOmitsOnRead(t *testing.T) {
 	t.Parallel()
-	client := &datastream.Mock{}
+	client := edgegrid.NewTestClient()
 
 	streamConfiguration := optionalCDNStreamConfiguration("test_stream")
 	streamConfiguration.ContractID = "test_contract"
@@ -1260,41 +1244,39 @@ func TestResourceImportUploadFilePrefixPreservedWhenAPIOmitsOnRead(t *testing.T)
 	}
 
 	// read (import refresh)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamResp, nil).
 		Once()
 	// read (delete pre-check)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamResp, nil).
 		Once()
-	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+	client.DataStream.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
 		Return(nil).
 		Once()
 
 	tfConfig := testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_inactive.tf")
 
-	useClient(client, func() {
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-			Steps: []resource.TestStep{
-				{
-					Config:             tfConfig,
-					ResourceName:       "akamai_datastream.s",
-					ImportState:        true,
-					ImportStateId:      strconv.FormatInt(streamID, 10),
-					ImportStateVerify:  false,
-					ImportStatePersist: true,
-					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_datastream.s", "id", strconv.FormatInt(streamID, 10)),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.upload_file_prefix", "pre"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.upload_file_suffix", "suf"),
-					),
-				},
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+		Steps: []resource.TestStep{
+			{
+				Config:             tfConfig,
+				ResourceName:       "akamai_datastream.s",
+				ImportState:        true,
+				ImportStateId:      strconv.FormatInt(streamID, 10),
+				ImportStateVerify:  false,
+				ImportStatePersist: true,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("akamai_datastream.s", "id", strconv.FormatInt(streamID, 10)),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.upload_file_prefix", "pre"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.upload_file_suffix", "suf"),
+				),
 			},
-		})
+		},
 	})
 
-	client.AssertExpectations(t)
+	client.DataStream.AssertExpectations(t)
 }
 
 // TestResourceStreamI775NoDriftWhenAPIOmitsFieldsOnRefresh reproduces
@@ -1303,7 +1285,7 @@ func TestResourceImportUploadFilePrefixPreservedWhenAPIOmitsOnRead(t *testing.T)
 // which must not cause perpetual in-place updates.
 func TestResourceStreamI775NoDriftWhenAPIOmitsFieldsOnRefresh(t *testing.T) {
 	t.Parallel()
-	client := &datastream.Mock{}
+	client := edgegrid.NewTestClient()
 
 	streamConfiguration := optionalCDNStreamConfiguration("test_stream")
 	streamConfiguration.ContractID = "test_contract"
@@ -1363,48 +1345,46 @@ func TestResourceStreamI775NoDriftWhenAPIOmitsFieldsOnRefresh(t *testing.T) {
 		LogType:  datastream.LogTypeCDN,
 	}
 
-	client.On("CreateStream", testutils.MockContext, createStreamRequest).
+	client.DataStream.On("CreateStream", testutils.MockContext, createStreamRequest).
 		Return(&datastream.DetailedStreamVersion{StreamID: streamID}, nil).
 		Once()
 	// read after create (integration_type from API)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamWithIntegrationType, nil).
 		Once()
 	// read (plan-only refresh)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamOmittingIdentifiers, nil).
 		Once()
 	// read (plan-only refresh and delete pre-check)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamOmittingIdentifiers, nil).
 		Times(2)
-	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+	client.DataStream.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
 		Return(nil).
 		Once()
 
 	tfConfig := testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_inactive.tf")
 
-	useClient(client, func() {
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-			Steps: []resource.TestStep{
-				{
-					Config: tfConfig,
-					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "integration_type", "DS_MANAGED"),
-					),
-				},
-				{
-					Config:   tfConfig,
-					PlanOnly: true,
-				},
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+		Steps: []resource.TestStep{
+			{
+				Config: tfConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "integration_type", "DS_MANAGED"),
+				),
 			},
-		})
+			{
+				Config:   tfConfig,
+				PlanOnly: true,
+			},
+		},
 	})
 
-	client.AssertExpectations(t)
+	client.DataStream.AssertExpectations(t)
 }
 
 // TestResourceStreamI775ExactBugReportSymptoms reproduces the exact symptoms from
@@ -1413,7 +1393,7 @@ func TestResourceStreamI775NoDriftWhenAPIOmitsFieldsOnRefresh(t *testing.T) {
 // state must keep configured IDs and the next plan must be empty.
 func TestResourceStreamI775ExactBugReportSymptoms(t *testing.T) {
 	t.Parallel()
-	client := &datastream.Mock{}
+	client := edgegrid.NewTestClient()
 
 	streamConfiguration := optionalCDNStreamConfiguration("test_stream")
 	streamConfiguration.ContractID = "test_contract"
@@ -1471,57 +1451,55 @@ func TestResourceStreamI775ExactBugReportSymptoms(t *testing.T) {
 	}
 
 	// create
-	client.On("CreateStream", testutils.MockContext, createStreamRequest).
+	client.DataStream.On("CreateStream", testutils.MockContext, createStreamRequest).
 		Return(&datastream.DetailedStreamVersion{StreamID: streamID}, nil).
 		Once()
 
 	// read (after create and post-apply refresh)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamResp, nil).
 		Times(2)
 	// read (plan-only refresh and delete pre-check)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamResp, nil).
 		Times(2)
 
 	// delete
-	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+	client.DataStream.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
 		Return(nil).
 		Once()
 
 	tfConfig := testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_inactive_prefixed_ids.tf")
 
-	useClient(client, func() {
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-			Steps: []resource.TestStep{
-				{
-					Config: tfConfig,
-					Check: resource.ComposeTestCheckFunc(
-						// DiffSuppress strips prefixes; state stores unprefixed values.
-						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "integration_type", "DS_MANAGED"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "stream_version", "1"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "latest_version", "1"),
-					),
-				},
-				{
-					Config:   tfConfig,
-					PlanOnly: true,
-				},
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+		Steps: []resource.TestStep{
+			{
+				Config: tfConfig,
+				Check: resource.ComposeTestCheckFunc(
+					// DiffSuppress strips prefixes; state stores unprefixed values.
+					resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "integration_type", "DS_MANAGED"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "stream_version", "1"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "latest_version", "1"),
+				),
 			},
-		})
+			{
+				Config:   tfConfig,
+				PlanOnly: true,
+			},
+		},
 	})
 
-	client.AssertExpectations(t)
+	client.DataStream.AssertExpectations(t)
 }
 
 // TestResourceStreamI775NoDriftWhenAPIReturnsOnlyGroupZero covers the partial I#775 case
 // where contractId is present on GET but groupId is 0.
 func TestResourceStreamI775NoDriftWhenAPIReturnsOnlyGroupZero(t *testing.T) {
 	t.Parallel()
-	client := &datastream.Mock{}
+	client := edgegrid.NewTestClient()
 
 	streamConfiguration := optionalCDNStreamConfiguration("test_stream")
 	streamConfiguration.ContractID = "test_contract"
@@ -1578,51 +1556,49 @@ func TestResourceStreamI775NoDriftWhenAPIReturnsOnlyGroupZero(t *testing.T) {
 	}
 
 	// create
-	client.On("CreateStream", testutils.MockContext, createStreamRequest).
+	client.DataStream.On("CreateStream", testutils.MockContext, createStreamRequest).
 		Return(&datastream.DetailedStreamVersion{StreamID: streamID}, nil).
 		Once()
 
 	// read (after create and post-apply refresh)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamResp, nil).
 		Times(2)
 	// read (plan-only refresh and delete pre-check)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamResp, nil).
 		Times(2)
 
 	// delete
-	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+	client.DataStream.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
 		Return(nil).
 		Once()
 
 	tfConfig := testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_inactive.tf")
 
-	useClient(client, func() {
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-			Steps: []resource.TestStep{
-				{
-					Config: tfConfig,
-					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
-					),
-				},
-				{
-					Config:   tfConfig,
-					PlanOnly: true,
-				},
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+		Steps: []resource.TestStep{
+			{
+				Config: tfConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
+				),
 			},
-		})
+			{
+				Config:   tfConfig,
+				PlanOnly: true,
+			},
+		},
 	})
 
-	client.AssertExpectations(t)
+	client.DataStream.AssertExpectations(t)
 }
 
 func TestResourceStreamUploadFilePrefixPreservedWhenAPIOmitsOnRead(t *testing.T) {
 	t.Parallel()
-	client := &datastream.Mock{}
+	client := edgegrid.NewTestClient()
 
 	streamConfiguration := optionalCDNStreamConfiguration("test_stream")
 	streamConfiguration.ContractID = "test_contract"
@@ -1678,51 +1654,49 @@ func TestResourceStreamUploadFilePrefixPreservedWhenAPIOmitsOnRead(t *testing.T)
 	}
 
 	// create
-	client.On("CreateStream", testutils.MockContext, createStreamRequest).
+	client.DataStream.On("CreateStream", testutils.MockContext, createStreamRequest).
 		Return(&datastream.DetailedStreamVersion{StreamID: streamID}, nil).
 		Once()
 
 	// read (after create and post-apply refresh)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamResp, nil).
 		Times(2)
 	// read (plan-only refresh and delete pre-check)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamResp, nil).
 		Times(2)
 
 	// delete
-	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+	client.DataStream.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
 		Return(nil).
 		Once()
 
 	tfConfig := testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_inactive.tf")
 
-	useClient(client, func() {
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-			Steps: []resource.TestStep{
-				{
-					Config: tfConfig,
-					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.upload_file_prefix", "pre"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.upload_file_suffix", "suf"),
-					),
-				},
-				{
-					Config:   tfConfig,
-					PlanOnly: true,
-				},
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+		Steps: []resource.TestStep{
+			{
+				Config: tfConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.upload_file_prefix", "pre"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.upload_file_suffix", "suf"),
+				),
 			},
-		})
+			{
+				Config:   tfConfig,
+				PlanOnly: true,
+			},
+		},
 	})
 
-	client.AssertExpectations(t)
+	client.DataStream.AssertExpectations(t)
 }
 
 func TestResourceStreamPropertiesOrderDiffSuppress(t *testing.T) {
 	t.Parallel()
-	client := &datastream.Mock{}
+	client := edgegrid.NewTestClient()
 
 	streamConfiguration := datastream.StreamConfiguration{
 		CollectMidgress: false,
@@ -1812,47 +1786,45 @@ func TestResourceStreamPropertiesOrderDiffSuppress(t *testing.T) {
 	}
 
 	// create
-	client.On("CreateStream", testutils.MockContext, createStreamRequest).
+	client.DataStream.On("CreateStream", testutils.MockContext, createStreamRequest).
 		Return(&datastream.DetailedStreamVersion{StreamID: streamID}, nil).
 		Once()
 
 	// read (after create and post-apply refresh)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamResp, nil).
 		Times(2)
 	// read (plan-only refresh and delete pre-check)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamResp, nil).
 		Times(2)
 
 	// delete
-	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+	client.DataStream.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
 		Return(nil).
 		Once()
 
-	useClient(client, func() {
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-			Steps: []resource.TestStep{
-				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_inactive.tf"),
-				},
-				{
-					// Reordered properties with the same membership must not produce a plan.
-					Config:             testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_inactive_properties_reordered.tf"),
-					PlanOnly:           true,
-					ExpectNonEmptyPlan: false,
-				},
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+		Steps: []resource.TestStep{
+			{
+				Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_inactive.tf"),
 			},
-		})
+			{
+				// Reordered properties with the same membership must not produce a plan.
+				Config:             testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_inactive_properties_reordered.tf"),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+		},
 	})
 
-	client.AssertExpectations(t)
+	client.DataStream.AssertExpectations(t)
 }
 
 func TestResourceStreamOptionalContractAndGroup_update(t *testing.T) {
 	t.Parallel()
-	client := &datastream.Mock{}
+	client := edgegrid.NewTestClient()
 
 	getStreamResp := &datastream.DetailedStreamVersion{
 		StreamID:      streamID,
@@ -1914,15 +1886,15 @@ func TestResourceStreamOptionalContractAndGroup_update(t *testing.T) {
 	}
 
 	// create
-	client.On("CreateStream", testutils.MockContext, createStreamRequest).
+	client.DataStream.On("CreateStream", testutils.MockContext, createStreamRequest).
 		Return(&datastream.DetailedStreamVersion{StreamID: streamID}, nil).
 		Once()
 	// read (after create and post-apply refresh)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamResp, nil).
 		Times(2)
 	// update
-	client.On("UpdateStream", testutils.MockContext, updateStreamRequest).
+	client.DataStream.On("UpdateStream", testutils.MockContext, updateStreamRequest).
 		Run(func(_ mock.Arguments) {
 			getStreamResp.StreamName = "test_stream_updated"
 			getStreamResp.StreamVersion = 2
@@ -1931,42 +1903,40 @@ func TestResourceStreamOptionalContractAndGroup_update(t *testing.T) {
 		Return(&datastream.DetailedStreamVersion{StreamID: streamID, StreamVersion: 2}, nil).
 		Once()
 	// read (pre-update refresh, status gate, and post-update refresh)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamResp, nil).
 		Times(4)
 	// read (delete pre-check)
-	client.On("GetStream", testutils.MockContext, getStreamRequest).
+	client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 		Return(getStreamResp, nil).
 		Once()
 	// delete
-	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+	client.DataStream.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
 		Return(nil).
 		Once()
 
-	useClient(client, func() {
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-			Steps: []resource.TestStep{
-				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_optional_ids.tf"),
-					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", ""),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", ""),
-					),
-				},
-				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/update_stream_optional_ids.tf"),
-					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_datastream.s", "stream_name", "test_stream_updated"),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", ""),
-						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", ""),
-					),
-				},
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+		Steps: []resource.TestStep{
+			{
+				Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_optional_ids.tf"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", ""),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", ""),
+				),
 			},
-		})
+			{
+				Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/update_stream_optional_ids.tf"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("akamai_datastream.s", "stream_name", "test_stream_updated"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", ""),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", ""),
+				),
+			},
+		},
 	})
 
-	client.AssertExpectations(t)
+	client.DataStream.AssertExpectations(t)
 }
 
 func TestResourceStreamErrors(t *testing.T) {
@@ -2076,31 +2046,29 @@ func TestResourceStreamErrors(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &datastream.Mock{}
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client)
+				test.init(client.DataStream)
 			}
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.tfFile),
-							ExpectError: test.withError,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.tfFile),
+						ExpectError: test.withError,
 					},
-				})
+				},
 			})
 
-			client.AssertExpectations(t)
+			client.DataStream.AssertExpectations(t)
 		})
 	}
 }
 
 func TestResourceStreamCustomDiff(t *testing.T) {
 	t.Parallel()
-	client := &datastream.Mock{}
+	client := edgegrid.NewTestClient()
 
 	tests := map[string]struct {
 		tfFile    string
@@ -2143,22 +2111,20 @@ func TestResourceStreamCustomDiff(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:             testutils.LoadFixtureString(t, test.tfFile),
-							ExpectError:        test.withError,
-							PlanOnly:           true,
-							ExpectNonEmptyPlan: true,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				Steps: []resource.TestStep{
+					{
+						Config:             testutils.LoadFixtureString(t, test.tfFile),
+						ExpectError:        test.withError,
+						PlanOnly:           true,
+						ExpectNonEmptyPlan: true,
 					},
-				})
+				},
 			})
 		})
 
-		client.AssertExpectations(t)
+		client.DataStream.AssertExpectations(t)
 	}
 }
 
@@ -2291,34 +2257,32 @@ func TestEmailIDs(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &datastream.Mock{}
+			client := edgegrid.NewTestClient()
 
 			createStreamRequest := createStreamRequestFactory(test.EmailIDs)
-			client.On("CreateStream", testutils.MockContext, createStreamRequest).
+			client.DataStream.On("CreateStream", testutils.MockContext, createStreamRequest).
 				Return(updateStreamResponse, nil).Once()
 
 			getStreamResponse := responseFactory(test.EmailIDs)
-			client.On("GetStream", testutils.MockContext, getStreamRequest).
+			client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 				Return(getStreamResponse, nil).Times(3)
 
-			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
+			client.DataStream.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				StreamID: streamID,
 				LogType:  datastream.LogTypeCDN,
 			}).Return(' ', nil).Once()
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/email_ids/%s", test.Filename),
-							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/email_ids/%s", test.Filename),
+						Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
 					},
-				})
-
-				client.AssertExpectations(t)
+				},
 			})
+
+			client.DataStream.AssertExpectations(t)
 		})
 	}
 
@@ -2526,53 +2490,51 @@ func TestDatasetIDsDiff(t *testing.T) {
 
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &datastream.Mock{}
+			client := edgegrid.NewTestClient()
 
-			client.On("CreateStream", testutils.MockContext, createStreamRequest).
+			client.DataStream.On("CreateStream", testutils.MockContext, createStreamRequest).
 				Return(createStreamResponse, nil).Once()
 
-			client.On("GetStream", testutils.MockContext, getStreamRequest).
+			client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 				Return(getStreamResponse, nil).Times(3)
 
-			client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+			client.DataStream.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
 				Return(' ', nil).Once()
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:             testutils.LoadFixtureString(t, test.preConfig),
-							ExpectNonEmptyPlan: test.expectNonEmptyPlan,
-							Check: resource.ComposeTestCheckFunc(
-								// Build expectations based on what should be visible after filtering
-								func() resource.TestCheckFunc {
-									// Filter out field 2051 from expectations
-									var filteredFields []int
-									for _, fieldID := range test.serverDatasetIDsOrder {
-										if fieldID != 2051 {
-											filteredFields = append(filteredFields, fieldID)
-										}
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				Steps: []resource.TestStep{
+					{
+						Config:             testutils.LoadFixtureString(t, test.preConfig),
+						ExpectNonEmptyPlan: test.expectNonEmptyPlan,
+						Check: resource.ComposeTestCheckFunc(
+							// Build expectations based on what should be visible after filtering
+							func() resource.TestCheckFunc {
+								// Filter out field 2051 from expectations
+								var filteredFields []int
+								for _, fieldID := range test.serverDatasetIDsOrder {
+									if fieldID != 2051 {
+										filteredFields = append(filteredFields, fieldID)
 									}
+								}
 
-									checkFuncs := []resource.TestCheckFunc{
-										resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", "dataset_fields.#", strconv.Itoa(len(filteredFields))),
-									}
+								checkFuncs := []resource.TestCheckFunc{
+									resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", "dataset_fields.#", strconv.Itoa(len(filteredFields))),
+								}
 
-									for i, fieldID := range filteredFields {
-										checkFuncs = append(checkFuncs,
-											resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", fmt.Sprintf("dataset_fields.%d", i), strconv.Itoa(fieldID)))
-									}
+								for i, fieldID := range filteredFields {
+									checkFuncs = append(checkFuncs,
+										resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", fmt.Sprintf("dataset_fields.%d", i), strconv.Itoa(fieldID)))
+								}
 
-									return resource.ComposeTestCheckFunc(checkFuncs...)
-								}(),
-							),
-						},
+								return resource.ComposeTestCheckFunc(checkFuncs...)
+							}(),
+						),
 					},
-				})
-
-				client.AssertExpectations(t)
+				},
 			})
+
+			client.DataStream.AssertExpectations(t)
 		})
 
 	}
@@ -2658,7 +2620,7 @@ func TestServiceIDsDiff(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &datastream.Mock{}
+			client := edgegrid.NewTestClient()
 
 			createStreamRequest := datastream.CreateStreamRequest{
 				StreamConfiguration: datastream.StreamConfiguration{
@@ -2710,7 +2672,7 @@ func TestServiceIDsDiff(t *testing.T) {
 				LatestVersion:     1,
 			}
 
-			client.On("CreateStream", testutils.MockContext, mock.MatchedBy(func(req datastream.CreateStreamRequest) bool {
+			client.DataStream.On("CreateStream", testutils.MockContext, mock.MatchedBy(func(req datastream.CreateStreamRequest) bool {
 				if req.Activate != createStreamRequest.Activate || req.LogType != createStreamRequest.LogType {
 					return false
 				}
@@ -2729,27 +2691,25 @@ func TestServiceIDsDiff(t *testing.T) {
 				return true
 			})).Return(&datastream.DetailedStreamVersion{StreamID: streamID, StreamVersion: 1}, nil).Once()
 
-			client.On("GetStream", testutils.MockContext, getStreamRequest).
+			client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 				Return(getStreamResponse, nil).Times(3)
 
-			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
+			client.DataStream.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				StreamID: streamID,
 				LogType:  datastream.LogTypeAnswerX,
 			}).Return(nil).Once()
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:             testutils.LoadFixtureString(t, test.preConfig),
-							ExpectNonEmptyPlan: test.expectNonEmptyPlan,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				Steps: []resource.TestStep{
+					{
+						Config:             testutils.LoadFixtureString(t, test.preConfig),
+						ExpectNonEmptyPlan: test.expectNonEmptyPlan,
 					},
-				})
-
-				client.AssertExpectations(t)
+				},
 			})
+
+			client.DataStream.AssertExpectations(t)
 		})
 	}
 }
@@ -3018,34 +2978,34 @@ func TestCustomHeaders(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &datastream.Mock{}
+			t.Parallel()
+
+			client := edgegrid.NewTestClient()
 
 			createStreamRequest := createStreamRequestFactory(test.Connector)
-			client.On("CreateStream", testutils.MockContext, createStreamRequest).
+			client.DataStream.On("CreateStream", testutils.MockContext, createStreamRequest).
 				Return(updateStreamResponse, nil).Once()
 
 			getStreamResponse := responseFactory(test.Response)
-			client.On("GetStream", testutils.MockContext, getStreamRequest).
+			client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 				Return(getStreamResponse, nil).Times(3)
 
-			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
+			client.DataStream.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				StreamID: streamID,
 				LogType:  datastream.LogTypeCDN,
 			}).Return(' ', nil).Once()
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/custom_headers/%s", test.Filename),
-							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/custom_headers/%s", test.Filename),
+						Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
 					},
-				})
-
-				client.AssertExpectations(t)
+				},
 			})
+
+			client.DataStream.AssertExpectations(t)
 		})
 	}
 }
@@ -3248,34 +3208,32 @@ func TestMTLS(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &datastream.Mock{}
+			client := edgegrid.NewTestClient()
 
 			createStreamRequest := createStreamRequestFactory(test.Connector)
-			client.On("CreateStream", testutils.MockContext, createStreamRequest).
+			client.DataStream.On("CreateStream", testutils.MockContext, createStreamRequest).
 				Return(updateStreamResponse, nil).Once()
 
 			getStreamResponse := responseFactory(test.Response)
-			client.On("GetStream", testutils.MockContext, getStreamRequest).
+			client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 				Return(getStreamResponse, nil).Times(3)
 
-			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
+			client.DataStream.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				StreamID: streamID,
 				LogType:  datastream.LogTypeCDN,
 			}).Return(' ', nil).Once()
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/mtls/%s", test.Filename),
-							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/mtls/%s", test.Filename),
+						Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
 					},
-				})
-
-				client.AssertExpectations(t)
+				},
 			})
+
+			client.DataStream.AssertExpectations(t)
 		})
 	}
 }
@@ -3869,29 +3827,27 @@ func TestConnectors(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &datastream.Mock{}
+			client := edgegrid.NewTestClient()
 
-			client.On("CreateStream", testutils.MockContext, createStreamRequestFactory(test.Connector)).
+			client.DataStream.On("CreateStream", testutils.MockContext, createStreamRequestFactory(test.Connector)).
 				Return(updateStreamResponse, nil).Once()
 
-			client.On("GetStream", testutils.MockContext, getStreamRequest).
+			client.DataStream.On("GetStream", testutils.MockContext, getStreamRequest).
 				Return(responseFactory(test.Response), nil).Times(3)
 
-			client.On("DeleteStream", testutils.MockContext, mock.Anything).Return(' ', nil).Once()
+			client.DataStream.On("DeleteStream", testutils.MockContext, mock.Anything).Return(' ', nil).Once()
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/connectors/%s", test.Filename),
-							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/connectors/%s", test.Filename),
+						Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
 					},
-				})
-
-				client.AssertExpectations(t)
+				},
 			})
+
+			client.DataStream.AssertExpectations(t)
 		})
 	}
 }
@@ -3994,7 +3950,7 @@ func TestResourceStreamSamplingPercentage(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &datastream.Mock{}
+			client := edgegrid.NewTestClient()
 
 			streamConfig := datastream.StreamConfiguration{
 				ContractID: "test_contract",
@@ -4082,15 +4038,15 @@ func TestResourceStreamSamplingPercentage(t *testing.T) {
 			// Only set up mock expectations if we're not expecting a validation error
 			// Validation errors occur before the API call, so no mocks are needed
 			if test.expectError == nil {
-				client.On("CreateStream", testutils.MockContext, createReq).
+				client.DataStream.On("CreateStream", testutils.MockContext, createReq).
 					Return(streamResponse, nil).Once()
 
-				client.On("GetStream", testutils.MockContext, datastream.GetStreamRequest{
+				client.DataStream.On("GetStream", testutils.MockContext, datastream.GetStreamRequest{
 					StreamID: streamID,
 					LogType:  datastream.LogTypeCDN,
 				}).Return(streamResponse, nil).Times(3)
 
-				client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
+				client.DataStream.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 					StreamID: streamID,
 					LogType:  datastream.LogTypeCDN,
 				}).Return(' ', nil).Once()
@@ -4133,58 +4089,56 @@ resource "akamai_datastream" "s" {
 }
 `, samplingPercentage)
 
-			useClient(client, func() {
-				// For validation error cases, expect error and don't run checks
-				if test.expectError != nil {
-					resource.UnitTest(t, resource.TestCase{
-						ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-						Steps: []resource.TestStep{
-							{
-								Config:      tfConfig,
-								ExpectError: test.expectError,
-							},
-						},
-					})
-					return
-				}
-
-				var checks []resource.TestCheckFunc
-				checks = append(checks,
-					resource.TestCheckResourceAttr("akamai_datastream.s", "stream_name", "test_stream"),
-				)
-
-				// When sampling_percentage is set, verify both sampling_percentage and integration_type are populated
-				if test.expectSampling && test.samplingPercentage > 0 {
-					checks = append(checks,
-						resource.TestCheckResourceAttr("akamai_datastream.s", "sampling_percentage", strconv.Itoa(test.samplingPercentage)),
-					)
-				} else {
-					// When sampling_percentage is not set, verify it's not in state
-					checks = append(checks, resource.TestCheckNoResourceAttr("akamai_datastream.s", "sampling_percentage"))
-				}
-
-				// Verify integration_type: if present in API response, it should be in state; otherwise not
-				if test.integrationType != "" {
-					checks = append(checks,
-						resource.TestCheckResourceAttr("akamai_datastream.s", "integration_type", test.integrationType),
-					)
-				} else {
-					checks = append(checks, resource.TestCheckNoResourceAttr("akamai_datastream.s", "integration_type"))
-				}
-
+			// For validation error cases, expect error and don't run checks
+			if test.expectError != nil {
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
 					Steps: []resource.TestStep{
 						{
-							Config: tfConfig,
-							Check:  resource.ComposeTestCheckFunc(checks...),
+							Config:      tfConfig,
+							ExpectError: test.expectError,
 						},
 					},
 				})
+				return
+			}
+
+			var checks []resource.TestCheckFunc
+			checks = append(checks,
+				resource.TestCheckResourceAttr("akamai_datastream.s", "stream_name", "test_stream"),
+			)
+
+			// When sampling_percentage is set, verify both sampling_percentage and integration_type are populated
+			if test.expectSampling && test.samplingPercentage > 0 {
+				checks = append(checks,
+					resource.TestCheckResourceAttr("akamai_datastream.s", "sampling_percentage", strconv.Itoa(test.samplingPercentage)),
+				)
+			} else {
+				// When sampling_percentage is not set, verify it's not in state
+				checks = append(checks, resource.TestCheckNoResourceAttr("akamai_datastream.s", "sampling_percentage"))
+			}
+
+			// Verify integration_type: if present in API response, it should be in state; otherwise not
+			if test.integrationType != "" {
+				checks = append(checks,
+					resource.TestCheckResourceAttr("akamai_datastream.s", "integration_type", test.integrationType),
+				)
+			} else {
+				checks = append(checks, resource.TestCheckNoResourceAttr("akamai_datastream.s", "integration_type"))
+			}
+
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				Steps: []resource.TestStep{
+					{
+						Config: tfConfig,
+						Check:  resource.ComposeTestCheckFunc(checks...),
+					},
+				},
 			})
 
 			// Assert mock expectations for all cases
-			client.AssertExpectations(t)
+			client.DataStream.AssertExpectations(t)
 		})
 	}
 }
@@ -4218,7 +4172,7 @@ func TestResourceStreamSamplingPercentageIdempotency(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &datastream.Mock{}
+			client := edgegrid.NewTestClient()
 
 			streamConfig := datastream.StreamConfiguration{
 				ContractID: "test_contract",
@@ -4298,15 +4252,15 @@ func TestResourceStreamSamplingPercentageIdempotency(t *testing.T) {
 				ModifiedDate:          "01-01-2026 00:00:00 GMT",
 			}
 
-			client.On("CreateStream", testutils.MockContext, createReq).
+			client.DataStream.On("CreateStream", testutils.MockContext, createReq).
 				Return(streamResponse, nil).Once()
 
-			client.On("GetStream", testutils.MockContext, datastream.GetStreamRequest{
+			client.DataStream.On("GetStream", testutils.MockContext, datastream.GetStreamRequest{
 				StreamID: streamID,
 				LogType:  datastream.LogTypeCDN,
 			}).Return(streamResponse, nil).Times(4)
 
-			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
+			client.DataStream.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				StreamID: streamID,
 				LogType:  datastream.LogTypeCDN,
 			}).Return(' ', nil).Once()
@@ -4348,28 +4302,26 @@ resource "akamai_datastream" "s" {
 }
 `, samplingPercentageConfig)
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config: tfConfig,
-							Check: resource.ComposeTestCheckFunc(
-								resource.TestCheckResourceAttr("akamai_datastream.s", "stream_name", "test_stream"),
-								// With Computed: true, the API's returned value should be in state
-								resource.TestCheckResourceAttr("akamai_datastream.s", "sampling_percentage", strconv.Itoa(test.apiSamplingPercentage)),
-							),
-						},
-						{
-							// Second step with same config and PlanOnly verifies idempotency (no diff)
-							Config:   tfConfig,
-							PlanOnly: true,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				Steps: []resource.TestStep{
+					{
+						Config: tfConfig,
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_datastream.s", "stream_name", "test_stream"),
+							// With Computed: true, the API's returned value should be in state
+							resource.TestCheckResourceAttr("akamai_datastream.s", "sampling_percentage", strconv.Itoa(test.apiSamplingPercentage)),
+						),
 					},
-				})
+					{
+						// Second step with same config and PlanOnly verifies idempotency (no diff)
+						Config:   tfConfig,
+						PlanOnly: true,
+					},
+				},
 			})
 
-			client.AssertExpectations(t)
+			client.DataStream.AssertExpectations(t)
 		})
 	}
 }
@@ -4430,7 +4382,7 @@ func TestResourceStreamIntegrationType(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &datastream.Mock{}
+			client := edgegrid.NewTestClient()
 
 			streamConfig := datastream.StreamConfiguration{
 				ContractID: "test_contract",
@@ -4510,15 +4462,15 @@ func TestResourceStreamIntegrationType(t *testing.T) {
 				ModifiedDate:          "01-01-2026 00:00:00 GMT",
 			}
 
-			client.On("CreateStream", testutils.MockContext, createReq).
+			client.DataStream.On("CreateStream", testutils.MockContext, createReq).
 				Return(streamResponse, nil).Once()
 
-			client.On("GetStream", testutils.MockContext, datastream.GetStreamRequest{
+			client.DataStream.On("GetStream", testutils.MockContext, datastream.GetStreamRequest{
 				StreamID: streamID,
 				LogType:  datastream.LogTypeCDN,
 			}).Return(streamResponse, nil).Times(3)
 
-			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
+			client.DataStream.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				LogType:  datastream.LogTypeCDN,
 				StreamID: streamID,
 			}).Return(' ', nil).Once()
@@ -4560,43 +4512,41 @@ resource "akamai_datastream" "s" {
 }
 `, samplingPercentage)
 
-			useClient(client, func() {
-				var checks []resource.TestCheckFunc
+			var checks []resource.TestCheckFunc
+			checks = append(checks,
+				resource.TestCheckResourceAttr("akamai_datastream.s", "stream_name", "test_stream"),
+			)
+
+			// Verify sampling_percentage if set
+			if test.expectSampling {
 				checks = append(checks,
-					resource.TestCheckResourceAttr("akamai_datastream.s", "stream_name", "test_stream"),
+					resource.TestCheckResourceAttr("akamai_datastream.s", "sampling_percentage", strconv.Itoa(test.samplingPercentage)),
 				)
+			} else {
+				checks = append(checks, resource.TestCheckNoResourceAttr("akamai_datastream.s", "sampling_percentage"))
+			}
 
-				// Verify sampling_percentage if set
-				if test.expectSampling {
-					checks = append(checks,
-						resource.TestCheckResourceAttr("akamai_datastream.s", "sampling_percentage", strconv.Itoa(test.samplingPercentage)),
-					)
-				} else {
-					checks = append(checks, resource.TestCheckNoResourceAttr("akamai_datastream.s", "sampling_percentage"))
-				}
+			// Verify integration_type: if present in API response, it should be in state; otherwise not
+			if test.expectInState {
+				require.NotEmpty(t, test.integrationType, "integration_type should not be empty when expectInState is true")
+				checks = append(checks,
+					resource.TestCheckResourceAttr("akamai_datastream.s", "integration_type", test.integrationType),
+				)
+			} else {
+				checks = append(checks, resource.TestCheckNoResourceAttr("akamai_datastream.s", "integration_type"))
+			}
 
-				// Verify integration_type: if present in API response, it should be in state; otherwise not
-				if test.expectInState {
-					require.NotEmpty(t, test.integrationType, "integration_type should not be empty when expectInState is true")
-					checks = append(checks,
-						resource.TestCheckResourceAttr("akamai_datastream.s", "integration_type", test.integrationType),
-					)
-				} else {
-					checks = append(checks, resource.TestCheckNoResourceAttr("akamai_datastream.s", "integration_type"))
-				}
-
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config: tfConfig,
-							Check:  resource.ComposeTestCheckFunc(checks...),
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				Steps: []resource.TestStep{
+					{
+						Config: tfConfig,
+						Check:  resource.ComposeTestCheckFunc(checks...),
 					},
-				})
+				},
 			})
 
-			client.AssertExpectations(t)
+			client.DataStream.AssertExpectations(t)
 		})
 	}
 }
@@ -4707,38 +4657,36 @@ func TestResourceImportLogTypeProbing(t *testing.T) {
 
 	t.Run("continues probing on 404 and resolves APPSEC", func(t *testing.T) {
 		t.Parallel()
-		client := &datastream.Mock{}
+		client := edgegrid.NewTestClient()
 
 		// Import path should attempt to GET the stream with our test id.
-		client.On("GetStream", testutils.MockContext, getReqAppSec).
+		client.DataStream.On("GetStream", testutils.MockContext, getReqAppSec).
 			Return(appSecResponse(), nil)
 
 		// Here's the initial CDN probe request, which fails with a recoverable error, then probing should continue to APPSEC.
 		// Note: the error is wrapped the same way as in the datastream client code.
-		client.On("GetStream", testutils.MockContext, getReqCDN).
+		client.DataStream.On("GetStream", testutils.MockContext, getReqCDN).
 			Return(nil, fmt.Errorf("%s: %w", datastream.ErrGetStream, &datastream.Error{StatusCode: 404, Type: "not-found", Title: "Not Found", Detail: "stream not found for log type CDN"})).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:            testutils.LoadFixtureString(t, "testdata/TestResourceStream/appsec/create_app_sec_stream.tf"),
-						ImportState:       true,
-						ImportStateId:     strconv.FormatInt(streamID, 10),
-						ResourceName:      "akamai_datastream.s",
-						ImportStateVerify: false,
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:            testutils.LoadFixtureString(t, "testdata/TestResourceStream/appsec/create_app_sec_stream.tf"),
+					ImportState:       true,
+					ImportStateId:     strconv.FormatInt(streamID, 10),
+					ResourceName:      "akamai_datastream.s",
+					ImportStateVerify: false,
 				},
-			})
-
-			client.AssertExpectations(t)
+			},
 		})
+
+		client.DataStream.AssertExpectations(t)
 	})
 
 	t.Run("Continue probing on 404 and resolve ANSWERX", func(t *testing.T) {
 		t.Parallel()
-		client := &datastream.Mock{}
+		client := edgegrid.NewTestClient()
 		importStateCheck := tst.NewImportChecker().
 			CheckEqual("log_type", string(datastream.LogTypeAnswerX)).
 			CheckEqual("service_ids.#", "1").
@@ -4749,66 +4697,62 @@ func TestResourceImportLogTypeProbing(t *testing.T) {
 			resource.TestCheckTypeSetElemAttr("akamai_datastream.s", "service_ids.*", "12345"),
 		)
 
-		client.On("GetStream", testutils.MockContext, getReqCDN).
+		client.DataStream.On("GetStream", testutils.MockContext, getReqCDN).
 			Return(nil, fmt.Errorf("%s: %w", datastream.ErrGetStream, &datastream.Error{StatusCode: 404, Type: "not-found", Title: "Not Found", Detail: "stream not found for log type CDN"})).Once()
 
-		client.On("GetStream", testutils.MockContext, getReqAppSec).
+		client.DataStream.On("GetStream", testutils.MockContext, getReqAppSec).
 			Return(nil, fmt.Errorf("%s: %w", datastream.ErrGetStream, &datastream.Error{StatusCode: 404, Type: "not-found", Title: "Not Found", Detail: "stream not found for log type APPSEC"})).Once()
 
 		// Import path should attempt to GET the stream with our test id.
-		client.On("GetStream", testutils.MockContext, getReqAnswerX).
+		client.DataStream.On("GetStream", testutils.MockContext, getReqAnswerX).
 			Return(answerXResponse(), nil).Twice()
 
-		client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
+		client.DataStream.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 			StreamID: streamID,
 			LogType:  datastream.LogTypeAnswerX,
 		}).Return(nil).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:             testutils.LoadFixtureString(t, "testdata/TestResourceStream/answerx/create_answerx_stream.tf"),
-						ImportState:        true,
-						ImportStateId:      strconv.FormatInt(streamID, 10),
-						ResourceName:       "akamai_datastream.s",
-						ImportStateVerify:  false,
-						ImportStatePersist: true,
-						ImportStateCheck:   importStateCheck,
-						Check:              stateCheck,
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResourceStream/answerx/create_answerx_stream.tf"),
+					ImportState:        true,
+					ImportStateId:      strconv.FormatInt(streamID, 10),
+					ResourceName:       "akamai_datastream.s",
+					ImportStateVerify:  false,
+					ImportStatePersist: true,
+					ImportStateCheck:   importStateCheck,
+					Check:              stateCheck,
 				},
-			})
-
-			client.AssertExpectations(t)
+			},
 		})
+
+		client.DataStream.AssertExpectations(t)
 	})
 
 	t.Run("stops probing on 5xx", func(t *testing.T) {
 		t.Parallel()
-		client := &datastream.Mock{}
+		client := edgegrid.NewTestClient()
 
 		// In this case, the initial CDN probe request fails with an unrecoverable error, so probing should stop.
 		// Note: the error is wrapped the same way as in the datastream client code.
-		client.On("GetStream", testutils.MockContext, getReqCDN).
+		client.DataStream.On("GetStream", testutils.MockContext, getReqCDN).
 			Return(nil, fmt.Errorf("%s: %w", datastream.ErrGetStream, &datastream.Error{StatusCode: 503, Type: "internal-error", Title: "Service Unavailable", Detail: "upstream unavailable"})).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:        testutils.LoadFixtureString(t, "testdata/TestResourceStream/appsec/create_app_sec_stream.tf"),
-						ImportState:   true,
-						ImportStateId: strconv.FormatInt(streamID, 10),
-						ResourceName:  "akamai_datastream.s",
-						ExpectError:   regexp.MustCompile(`received unrecoverable error while probing for stream '12321' with log_type CDN`),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResourceStream/appsec/create_app_sec_stream.tf"),
+					ImportState:   true,
+					ImportStateId: strconv.FormatInt(streamID, 10),
+					ResourceName:  "akamai_datastream.s",
+					ExpectError:   regexp.MustCompile(`received unrecoverable error while probing for stream '12321' with log_type CDN`),
 				},
-			})
-
-			client.AssertExpectations(t)
+			},
 		})
+
+		client.DataStream.AssertExpectations(t)
 	})
 }

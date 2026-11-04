@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf/validators"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/subprovider"
-	"github.com/akamai/terraform-provider-akamai/v11/version"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf/validators"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/subprovider"
+	"github.com/akamai/terraform-provider-akamai/v12/version"
 	"github.com/hashicorp/terraform-plugin-framework/action"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -110,14 +110,17 @@ func (p *Provider) Schema(_ context.Context, _ provider.SchemaRequest, resp *pro
 						},
 						"access_token": schema.StringAttribute{
 							Required:   true,
+							Sensitive:  true,
 							Validators: []validator.String{validators.NotEmptyString()},
 						},
 						"client_token": schema.StringAttribute{
 							Required:   true,
+							Sensitive:  true,
 							Validators: []validator.String{validators.NotEmptyString()},
 						},
 						"client_secret": schema.StringAttribute{
 							Required:   true,
+							Sensitive:  true,
 							Validators: []validator.String{validators.NotEmptyString()},
 						},
 						"max_body": schema.Int64Attribute{

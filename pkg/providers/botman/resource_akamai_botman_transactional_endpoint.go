@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/id"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -59,7 +59,7 @@ func resourceTransactionalEndpointCreate(ctx context.Context, d *schema.Resource
 	logger := meta.Log("botman", "resourceTransactionalEndpointCreateAction")
 	logger.Debugf("in resourceTransactionalEndpointCreateAction")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -85,8 +85,8 @@ func resourceTransactionalEndpointCreate(ctx context.Context, d *schema.Resource
 	}
 
 	request := botman.CreateTransactionalEndpointRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		JsonPayload:      jsonPayload,
 	}
@@ -117,7 +117,7 @@ func transactionalEndpointRead(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -132,8 +132,8 @@ func transactionalEndpointRead(ctx context.Context, d *schema.ResourceData, m in
 	operationID := iDParts[2]
 
 	request := botman.GetTransactionalEndpointRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		OperationID:      operationID,
 	}
@@ -192,7 +192,7 @@ func resourceTransactionalEndpointUpdate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -212,8 +212,8 @@ func resourceTransactionalEndpointUpdate(ctx context.Context, d *schema.Resource
 	}
 
 	request := botman.UpdateTransactionalEndpointRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		OperationID:      operationID,
 		SecurityPolicyID: securityPolicyID,
 		JsonPayload:      jsonPayload,
@@ -239,7 +239,7 @@ func resourceTransactionalEndpointDelete(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -254,8 +254,8 @@ func resourceTransactionalEndpointDelete(ctx context.Context, d *schema.Resource
 	operationID := iDParts[2]
 
 	request := botman.RemoveTransactionalEndpointRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		OperationID:      operationID,
 	}

@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -166,7 +166,7 @@ func (d *rapidRulesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		IncludeExpiryDetails: includeExpiry,
 	}
 
-	version, err := getLatestConfigVersion(ctx, int(configID), d.Client.GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, configID, d.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version", err.Error())
 		return
@@ -208,7 +208,7 @@ func (d *rapidRulesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	}
 
 	getAttackGroupsRequest := appsec.GetAttackGroupsRequest{
-		ConfigID: int(configID),
+		ConfigID: configID,
 		Version:  version,
 		PolicyID: policyID,
 	}

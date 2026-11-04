@@ -6,9 +6,9 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -42,7 +42,7 @@ func dataSourceCustomBotCategoryActionsRead(ctx context.Context, d *schema.Resou
 	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "dataSourceCustomBotCategoryActionsRead")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -63,8 +63,8 @@ func dataSourceCustomBotCategoryActionsRead(ctx context.Context, d *schema.Resou
 	}
 
 	request := botman.GetCustomBotCategoryActionListRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		CategoryID:       categoryID,
 	}
@@ -83,6 +83,6 @@ func dataSourceCustomBotCategoryActionsRead(ctx context.Context, d *schema.Resou
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 	return nil
 }

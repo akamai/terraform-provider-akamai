@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/accountprotection"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/accountprotection"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -40,7 +40,7 @@ func readDataSourceGeneralSettings(ctx context.Context, d *schema.ResourceData, 
 	logger := meta.Log("accountprotection", "readDataSourceGeneralSettings")
 	logger.Debugf("in readDataSourceGeneralSettings")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -56,8 +56,8 @@ func readDataSourceGeneralSettings(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	request := apr.GetGeneralSettingsRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 	}
 

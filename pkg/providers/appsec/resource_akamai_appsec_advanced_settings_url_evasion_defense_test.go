@@ -3,13 +3,14 @@ package appsec
 import (
 	"fmt"
 	"regexp"
+	"sync"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -130,6 +131,12 @@ func urlEvasionDefenseTests(t *testing.T) map[string]urlEvasionDefenseTestCase {
 				ExpectError: regexp.MustCompile(`(?s)bypass_lists.*at least 1`),
 			}},
 		},
+		"schema validation - empty rules": {
+			steps: []resource.TestStep{{
+				Config:      testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsURLEvasionDefense/url_evasion_defense_empty_rules.tf"),
+				ExpectError: regexp.MustCompile(`(?s)rules.*at least 1`),
+			}},
+		},
 		"schema validation - positive match false": {
 			steps: []resource.TestStep{{
 				Config:      testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsURLEvasionDefense/url_evasion_defense_positive_match_false.tf"),
@@ -245,67 +252,63 @@ func newURLEvasionDefenseFixture() urlEvasionDefenseFixture {
 	}
 }
 
+// mockURLEvasionDefenseGet registers a stateful GET mock, whose status follows successful update calls,
+// so the number of plan/refresh calls made by the framework does not matter.
+func mockURLEvasionDefenseGet(m *appsec.Mock, fixture urlEvasionDefenseFixture) *appsec.GetAdvancedSettingsURLEvasionDefenseResponse {
+	current := fixture.getResponseEnabled
+	m.On("GetAdvancedSettingsURLEvasionDefense", mock.Anything, appsec.GetAdvancedSettingsURLEvasionDefenseRequest{ConfigID: 43253, Version: 7}).
+		Return(&current, nil)
+	return &current
+}
+
+func mockURLEvasionDefenseUpdateCall(m *appsec.Mock, current *appsec.GetAdvancedSettingsURLEvasionDefenseResponse, status appsec.AdvancedSettingsURLEvasionDefenseStatus, resp *appsec.UpdateAdvancedSettingsURLEvasionDefenseResponse) {
+	m.On("UpdateAdvancedSettingsURLEvasionDefense", mock.Anything, mock.MatchedBy(matchURLEvasionDefenseUpdateRequest(status))).
+		Run(func(mock.Arguments) { current.Status = string(status) }).
+		Return(resp, nil).Once()
+}
+
 func mockURLEvasionDefenseCreateAndDestroy(m *appsec.Mock, fixture urlEvasionDefenseFixture) {
 	m.On("GetConfiguration", mock.Anything, appsec.GetConfigurationRequest{ConfigID: 43253}).
-		Return(&fixture.getConfigResponse, nil).Times(4)
+		Return(&fixture.getConfigResponse, nil)
 
 	m.On("GetConfigurationVersion", mock.Anything, appsec.GetConfigurationVersionRequest{ConfigID: 43253, Version: 7}).
-		Return(nil, fmt.Errorf("not found")).Times(2)
+		Return(nil, fmt.Errorf("not found")).Maybe()
 
-	getRequest := appsec.GetAdvancedSettingsURLEvasionDefenseRequest{ConfigID: 43253, Version: 7}
-
-	m.On("GetAdvancedSettingsURLEvasionDefense", mock.Anything, getRequest).
-		Return(&fixture.getResponseEnabled, nil).Once()
-
-	m.On("UpdateAdvancedSettingsURLEvasionDefense", mock.Anything, mock.MatchedBy(matchURLEvasionDefenseUpdateRequest(appsec.AdvancedSettingsURLEvasionDefenseStatusEnabled))).
-		Return(&fixture.updateResp, nil).Once()
-
-	m.On("GetAdvancedSettingsURLEvasionDefense", mock.Anything, getRequest).
-		Return(&fixture.getResponseEnabled, nil).Times(3)
-
-	m.On("UpdateAdvancedSettingsURLEvasionDefense", mock.Anything, mock.MatchedBy(matchURLEvasionDefenseUpdateRequest(appsec.AdvancedSettingsURLEvasionDefenseStatusDisabled))).
-		Return(&fixture.updateResp, nil).Once()
+	current := mockURLEvasionDefenseGet(m, fixture)
+	mockURLEvasionDefenseUpdateCall(m, current, appsec.AdvancedSettingsURLEvasionDefenseStatusEnabled, &fixture.updateResp)
+	mockURLEvasionDefenseUpdateCall(m, current, appsec.AdvancedSettingsURLEvasionDefenseStatusDisabled, &fixture.updateResp)
 }
 
 func mockURLEvasionDefenseUpdate(m *appsec.Mock, fixture urlEvasionDefenseFixture) {
 	m.On("GetConfiguration", mock.Anything, appsec.GetConfigurationRequest{ConfigID: 43253}).
-		Return(&fixture.getConfigResponse, nil).Times(8)
+		Return(&fixture.getConfigResponse, nil)
 
 	m.On("GetConfigurationVersion", mock.Anything, appsec.GetConfigurationVersionRequest{ConfigID: 43253, Version: 7}).
-		Return(nil, fmt.Errorf("not found")).Times(3)
+		Return(nil, fmt.Errorf("not found")).Maybe()
 
-	getRequest := appsec.GetAdvancedSettingsURLEvasionDefenseRequest{ConfigID: 43253, Version: 7}
 	disabledUpdateResponse := ptr.To(appsec.UpdateAdvancedSettingsURLEvasionDefenseResponse(fixture.getResponseDisabled))
 
-	m.On("GetAdvancedSettingsURLEvasionDefense", mock.Anything, getRequest).Return(&fixture.getResponseEnabled, nil).Once()
-	m.On("UpdateAdvancedSettingsURLEvasionDefense", mock.Anything, mock.MatchedBy(matchURLEvasionDefenseUpdateRequest(appsec.AdvancedSettingsURLEvasionDefenseStatusEnabled))).Return(&fixture.updateResp, nil).Once()
-	m.On("GetAdvancedSettingsURLEvasionDefense", mock.Anything, getRequest).Return(&fixture.getResponseEnabled, nil).Times(3)
-	m.On("UpdateAdvancedSettingsURLEvasionDefense", mock.Anything, mock.MatchedBy(matchURLEvasionDefenseUpdateRequest(appsec.AdvancedSettingsURLEvasionDefenseStatusDisabled))).Return(disabledUpdateResponse, nil).Once()
-	m.On("GetAdvancedSettingsURLEvasionDefense", mock.Anything, getRequest).Return(&fixture.getResponseDisabled, nil).Once()
-	m.On("UpdateAdvancedSettingsURLEvasionDefense", mock.Anything, mock.MatchedBy(matchURLEvasionDefenseUpdateRequest(appsec.AdvancedSettingsURLEvasionDefenseStatusDisabled))).Return(disabledUpdateResponse, nil).Once()
-	m.On("GetAdvancedSettingsURLEvasionDefense", mock.Anything, getRequest).Return(&fixture.getResponseDisabled, nil).Times(3)
+	current := mockURLEvasionDefenseGet(m, fixture)
+	mockURLEvasionDefenseUpdateCall(m, current, appsec.AdvancedSettingsURLEvasionDefenseStatusEnabled, &fixture.updateResp)
+	mockURLEvasionDefenseUpdateCall(m, current, appsec.AdvancedSettingsURLEvasionDefenseStatusDisabled, disabledUpdateResponse)
+	mockURLEvasionDefenseUpdateCall(m, current, appsec.AdvancedSettingsURLEvasionDefenseStatusDisabled, disabledUpdateResponse)
 }
 
 func mockURLEvasionDefenseUpdateBadRequest(m *appsec.Mock, fixture urlEvasionDefenseFixture) {
 	m.On("GetConfiguration", mock.Anything, appsec.GetConfigurationRequest{ConfigID: 43253}).
-		Return(&fixture.getConfigResponse, nil).Times(6)
+		Return(&fixture.getConfigResponse, nil)
 
 	m.On("GetConfigurationVersion", mock.Anything, appsec.GetConfigurationVersionRequest{ConfigID: 43253, Version: 7}).
-		Return(nil, fmt.Errorf("not found")).Times(3)
+		Return(nil, fmt.Errorf("not found")).Maybe()
 
-	getRequest := appsec.GetAdvancedSettingsURLEvasionDefenseRequest{ConfigID: 43253, Version: 7}
+	current := mockURLEvasionDefenseGet(m, fixture)
 
-	m.On("GetAdvancedSettingsURLEvasionDefense", mock.Anything, getRequest).
-		Return(&fixture.getResponseEnabled, nil).Times(6)
-
-	m.On("UpdateAdvancedSettingsURLEvasionDefense", mock.Anything, mock.MatchedBy(matchURLEvasionDefenseUpdateRequest(appsec.AdvancedSettingsURLEvasionDefenseStatusEnabled))).
-		Return(&fixture.updateResp, nil).Once()
+	mockURLEvasionDefenseUpdateCall(m, current, appsec.AdvancedSettingsURLEvasionDefenseStatusEnabled, &fixture.updateResp)
 
 	m.On("UpdateAdvancedSettingsURLEvasionDefense", mock.Anything, mock.MatchedBy(matchURLEvasionDefenseUpdateRequest(appsec.AdvancedSettingsURLEvasionDefenseStatusDisabled))).
 		Return(nil, &appsec.Error{StatusCode: 400, Title: "Bad Request", Detail: "invalid payload"}).Once()
 
-	m.On("UpdateAdvancedSettingsURLEvasionDefense", mock.Anything, mock.MatchedBy(matchURLEvasionDefenseUpdateRequest(appsec.AdvancedSettingsURLEvasionDefenseStatusDisabled))).
-		Return(ptr.To(appsec.UpdateAdvancedSettingsURLEvasionDefenseResponse(fixture.getResponseDisabled)), nil).Once()
+	mockURLEvasionDefenseUpdateCall(m, current, appsec.AdvancedSettingsURLEvasionDefenseStatusDisabled, ptr.To(appsec.UpdateAdvancedSettingsURLEvasionDefenseResponse(fixture.getResponseDisabled)))
 }
 
 func mockURLEvasionDefenseImport(m *appsec.Mock, fixture urlEvasionDefenseFixture) {
@@ -330,4 +333,91 @@ func newImportCheckerWithBatch(batch test.AttributeBatch) test.ImportChecker {
 		checker = checker.CheckEqual(attr, val)
 	}
 	return checker
+}
+
+func newStatefulURLEvasionDefenseClient(ruleInfo func(ruleID int64) (name, description string)) *edgegrid.TestClient {
+	var (
+		lock    sync.Mutex
+		current = appsec.GetAdvancedSettingsURLEvasionDefenseResponse{Status: "enabled", LockVersion: 3}
+	)
+
+	client := edgegrid.NewTestClient()
+	m := client.APPSEC
+	m.On("GetConfiguration", mock.Anything, mock.Anything).
+		Return(&appsec.GetConfigurationResponse{ID: 43253, LatestVersion: 7, StagingVersion: 6, ProductionVersion: 6}, nil)
+	m.On("GetConfigurationVersion", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("not found")).Maybe()
+	m.On("GetAdvancedSettingsURLEvasionDefense", mock.Anything, mock.Anything).Return(&current, nil)
+	m.On("UpdateAdvancedSettingsURLEvasionDefense", mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			req := args.Get(1).(appsec.UpdateAdvancedSettingsURLEvasionDefenseRequest)
+			lock.Lock()
+			defer lock.Unlock()
+			current.Status = string(req.Body.Status)
+			current.BypassLists = req.Body.BypassLists
+			current.Rules = nil
+			for _, r := range req.Body.Rules {
+				name, description := ruleInfo(r.RuleID)
+				current.Rules = append(current.Rules, appsec.AdvancedSettingsURLEvasionDefenseRuleResponse{
+					RuleID: r.RuleID, Action: ptr.To(r.Action), Name: name, Description: description,
+				})
+			}
+		}).
+		Return((*appsec.UpdateAdvancedSettingsURLEvasionDefenseResponse)(&current), nil)
+
+	return client
+}
+
+func TestURLEvasionDefenseResource_AddRulesToEmpty(t *testing.T) {
+	t.Parallel()
+
+	client := newStatefulURLEvasionDefenseClient(func(int64) (string, string) {
+		return "Rule name", "Rule description"
+	})
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+		Steps: []resource.TestStep{
+			{Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsURLEvasionDefense/url_evasion_defense_minimal.tf")},
+			{
+				Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsURLEvasionDefense/url_evasion_defense_simple_rules.tf"),
+				Check: test.NewStateChecker("akamai_appsec_advanced_settings_url_evasion_defense.test").
+					CheckEqual("rules.0.name", "Rule name").Build(),
+			},
+		},
+	})
+}
+
+func TestURLEvasionDefenseResource_ReorderRulesKeepsNameAndDescription(t *testing.T) {
+	t.Parallel()
+
+	names := map[int64]string{1: "first", 2: "second", 3: "third", 4: "fourth"}
+	client := newStatefulURLEvasionDefenseClient(func(ruleID int64) (string, string) {
+		return names[ruleID], names[ruleID] + " description"
+	})
+
+	const res = "akamai_appsec_advanced_settings_url_evasion_defense.test"
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+		Steps: []resource.TestStep{
+			{
+				Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsURLEvasionDefense/url_evasion_defense_rules_initial.tf"),
+				Check: test.NewStateChecker(res).
+					CheckEqual("rules.0.name", "first").
+					CheckEqual("rules.1.name", "second").
+					CheckEqual("rules.2.name", "third").Build(),
+			},
+			{
+				// reordered, with a rule inserted at the front and one removed
+				Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsURLEvasionDefense/url_evasion_defense_rules_reordered.tf"),
+				Check: test.NewStateChecker(res).
+					CheckEqual("rules.0.name", "fourth").
+					CheckEqual("rules.0.description", "fourth description").
+					CheckEqual("rules.1.name", "third").
+					CheckEqual("rules.1.description", "third description").
+					CheckEqual("rules.2.name", "first").
+					CheckEqual("rules.2.description", "first description").Build(),
+			},
+		},
+	})
 }

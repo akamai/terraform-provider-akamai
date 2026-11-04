@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/id"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -50,7 +50,7 @@ func resourceRecategorizedAkamaiDefinedBotCreate(ctx context.Context, d *schema.
 	logger := meta.Log("botman", "resourceRecategorizedAkamaiDefinedBotCreateAction")
 	logger.Debugf("in resourceRecategorizedAkamaiDefinedBotCreateAction")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -71,8 +71,8 @@ func resourceRecategorizedAkamaiDefinedBotCreate(ctx context.Context, d *schema.
 	}
 
 	request := botman.CreateRecategorizedAkamaiDefinedBotRequest{
-		ConfigID:   int64(configID),
-		Version:    int64(version),
+		ConfigID:   configID,
+		Version:    version,
 		BotID:      botID,
 		CategoryID: categoryID,
 	}
@@ -99,7 +99,7 @@ func resourceRecategorizedAkamaiDefinedBotRead(ctx context.Context, d *schema.Re
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -112,8 +112,8 @@ func resourceRecategorizedAkamaiDefinedBotRead(ctx context.Context, d *schema.Re
 	botID := iDParts[1]
 
 	request := botman.GetRecategorizedAkamaiDefinedBotRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 		BotID:    botID,
 	}
 
@@ -147,7 +147,7 @@ func resourceRecategorizedAkamaiDefinedBotUpdate(ctx context.Context, d *schema.
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -165,8 +165,8 @@ func resourceRecategorizedAkamaiDefinedBotUpdate(ctx context.Context, d *schema.
 	}
 
 	request := botman.UpdateRecategorizedAkamaiDefinedBotRequest{
-		ConfigID:   int64(configID),
-		Version:    int64(version),
+		ConfigID:   configID,
+		Version:    version,
 		BotID:      botID,
 		CategoryID: categoryID,
 	}
@@ -191,7 +191,7 @@ func resourceRecategorizedAkamaiDefinedBotDelete(ctx context.Context, d *schema.
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -204,8 +204,8 @@ func resourceRecategorizedAkamaiDefinedBotDelete(ctx context.Context, d *schema.
 	botID := iDParts[1]
 
 	request := botman.RemoveRecategorizedAkamaiDefinedBotRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 		BotID:    botID,
 	}
 

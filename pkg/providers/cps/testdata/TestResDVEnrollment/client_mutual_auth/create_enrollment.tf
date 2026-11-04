@@ -43,13 +43,13 @@ resource "akamai_cps_dv_enrollment" "dv" {
     disallowed_tls_versions = [
       "TLSv1",
     "TLSv1_1"]
-    clone_dns_names   = false
-    dns_names         = ["test.akamai.com"]
-    geography         = "core"
-    ocsp_stapling     = "on"
-    preferred_ciphers = "ak-akamai-default"
-    must_have_ciphers = "ak-akamai-default"
-    quic_enabled      = false
+    enable_for_all_sans = false
+    dns_names           = ["test.akamai.com"]
+    geography           = "core"
+    ocsp_stapling       = "on"
+    preferred_ciphers   = "ak-akamai-default"
+    must_have_ciphers   = "ak-akamai-default"
+    quic_enabled        = false
     client_mutual_authentication {
       ocsp_enabled           = true
       send_ca_list_to_client = false

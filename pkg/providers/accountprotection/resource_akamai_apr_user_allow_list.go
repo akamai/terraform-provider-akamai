@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"strconv"
 
-	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/accountprotection"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/accountprotection"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -48,7 +48,7 @@ func createResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m 
 	logger := meta.Log("accountprotection", "createResourceUserAllowList")
 	logger.Debugf("in createResourceUserAllowList")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -64,8 +64,8 @@ func createResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	request := apr.UpsertUserAllowListIDRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		JsonPayload: json.RawMessage(jsonPayloadString),
 	}
 
@@ -75,7 +75,7 @@ func createResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 
 	return readResourceUserAllowList(ctx, d, m)
 }
@@ -86,7 +86,7 @@ func readResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("accountprotection", "readResourceUserAllowList")
 	logger.Debugf("in readResourceUserAllowList")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -97,8 +97,8 @@ func readResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	request := apr.GetUserAllowListIDRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 	}
 
 	response, err := client.GetUserAllowListID(ctx, request)
@@ -139,7 +139,7 @@ func updateResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m 
 	logger := meta.Log("accountprotection", "updateResourceUserAllowList")
 	logger.Debugf("in updateResourceUserAllowList")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -155,8 +155,8 @@ func updateResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	request := apr.UpsertUserAllowListIDRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		JsonPayload: json.RawMessage(jsonPayloadString),
 	}
 
@@ -175,7 +175,7 @@ func deleteResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m 
 	logger := meta.Log("accountprotection", "deleteResourceUserAllowList")
 	logger.Debugf("in accountprotection deleteResourceUserAllowList")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -186,8 +186,8 @@ func deleteResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	request := apr.DeleteUserAllowListIDRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 	}
 
 	err = client.DeleteUserAllowListID(ctx, request)

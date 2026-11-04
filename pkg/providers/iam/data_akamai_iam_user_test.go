@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/date"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/date"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -37,7 +37,7 @@ type (
 		passwordExpiryDate                 time.Time
 		phone                              string
 		preferredLanguage                  string
-		secondaryEmail                     string
+		secondaryEmail                     *string
 		sessionTimeout                     int64
 		state                              string
 		tfaConfigured                      bool
@@ -105,7 +105,7 @@ var (
 		passwordExpiryDate:                 time.Date(2025, 1, 11, 7, 45, 18, 000, time.UTC),
 		phone:                              "987-654-321",
 		preferredLanguage:                  "English",
-		secondaryEmail:                     "seccondEmail@test.com",
+		secondaryEmail:                     ptr.To("seccondEmail@test.com"),
 		sessionTimeout:                     1000,
 		state:                              "CN",
 		tfaEnabled:                         true,
@@ -137,7 +137,7 @@ var (
 		passwordExpiryDate:                 time.Date(2025, 1, 11, 7, 45, 18, 000, time.UTC),
 		phone:                              "987-654-321",
 		preferredLanguage:                  "English",
-		secondaryEmail:                     "seccondEmail@test.com",
+		secondaryEmail:                     ptr.To("seccondEmail@test.com"),
 		sessionTimeout:                     1000,
 		state:                              "CN",
 		tfaEnabled:                         true,
@@ -147,6 +147,39 @@ var (
 		actions:                            basicActionTestData,
 		notifications:                      basicNotificationTesData,
 		authGrants:                         append([]authGrantData{}, basicAuthGrantDataMaxSubgroup),
+	}
+
+	basicUserTestDataWithoutSecondaryEmail = testDataForUser{
+		uiIdentityID:                       "asd-12345",
+		uiUserName:                         "JoeDoeOh",
+		accountID:                          "acc-12345",
+		additionalAuthentication:           "NONE",
+		additionalAuthenticationConfigured: true,
+		address:                            "test address 12",
+		city:                               "test city",
+		contactType:                        "test contact type",
+		country:                            "test country",
+		email:                              "email@test.com",
+		emailUpdatePending:                 true,
+		firstName:                          "Joe",
+		isLocked:                           true,
+		jobTitle:                           "Phd",
+		lastLoginDate:                      time.Date(2021, 1, 11, 7, 45, 18, 000, time.UTC),
+		lastName:                           "Doe",
+		mobilePhone:                        "123-456-789",
+		passwordExpiryDate:                 time.Date(2025, 1, 11, 7, 45, 18, 000, time.UTC),
+		phone:                              "987-654-321",
+		preferredLanguage:                  "English",
+		secondaryEmail:                     nil,
+		sessionTimeout:                     1000,
+		state:                              "CN",
+		tfaEnabled:                         true,
+		tfaConfigured:                      true,
+		timeZone:                           "UTC",
+		zipCode:                            "12-345",
+		actions:                            basicActionTestData,
+		notifications:                      basicNotificationTesData,
+		authGrants:                         append([]authGrantData{}, basicAuthGrantData),
 	}
 
 	basicActionTestData = actionsData{
@@ -205,6 +238,13 @@ func TestDataUser(t *testing.T) {
 				expectGetUser(m, testData, 3)
 			},
 			mockData: basicUserTestData,
+		},
+		"happy path - user without secondary email": {
+			configPath: "testdata/TestDataUser/default.tf",
+			init: func(m *iam.Mock, testData testDataForUser) {
+				expectGetUser(m, testData, 3)
+			},
+			mockData: basicUserTestDataWithoutSecondaryEmail,
 		},
 		"happy path - max amount of sub groups": {
 			configPath: "testdata/TestDataUser/default.tf",
@@ -434,7 +474,9 @@ func checkUserAttrs(data testDataForUser) resource.TestCheckFunc {
 	checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, "password_expiry_date", date.FormatRFC3339Nano(data.passwordExpiryDate)))
 	checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, "phone", data.phone))
 	checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, "preferred_language", data.preferredLanguage))
-	checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, "secondary_email", data.secondaryEmail))
+	if data.secondaryEmail != nil {
+		checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, "secondary_email", *data.secondaryEmail))
+	}
 	checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, "session_timeout", strconv.FormatInt(data.sessionTimeout, 10)))
 	checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, "tfa_configured", strconv.FormatBool(data.tfaConfigured)))
 	checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, "tfa_enabled", strconv.FormatBool(data.tfaEnabled)))

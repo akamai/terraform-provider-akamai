@@ -7,9 +7,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -48,7 +48,7 @@ func resourceClientSideSecurityCreate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("botman", "resourceClientSideSecurityCreate")
 	logger.Debugf("in resourceClientSideSecurityCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -64,8 +64,8 @@ func resourceClientSideSecurityCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	request := botman.UpdateClientSideSecurityRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		JsonPayload: json.RawMessage(jsonPayloadString),
 	}
 
@@ -75,7 +75,7 @@ func resourceClientSideSecurityCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 
 	return resourceClientSideSecurityRead(ctx, d, m)
 }
@@ -86,7 +86,7 @@ func resourceClientSideSecurityRead(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("botman", "resourceClientSideSecurityRead")
 	logger.Debugf("in resourceClientSideSecurityRead")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -97,8 +97,8 @@ func resourceClientSideSecurityRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	request := botman.GetClientSideSecurityRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 	}
 
 	response, err := client.GetClientSideSecurity(ctx, request)
@@ -119,7 +119,7 @@ func resourceClientSideSecurityRead(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 	return nil
 }
 
@@ -129,7 +129,7 @@ func resourceClientSideSecurityUpdate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("botman", "resourceClientSideSecurityUpdate")
 	logger.Debugf("in resourceClientSideSecurityUpdate")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -145,8 +145,8 @@ func resourceClientSideSecurityUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	request := botman.UpdateClientSideSecurityRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		JsonPayload: json.RawMessage(jsonPayloadString),
 	}
 

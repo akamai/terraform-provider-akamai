@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/ptr"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	tst "github.com/akamai/terraform-provider-akamai/v11/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cloudcertificates"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/ptr"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	tst "github.com/akamai/terraform-provider-akamai/v12/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -134,7 +134,7 @@ func TestDataLineages(t *testing.T) {
 				resource.TestCheckResourceAttr("data.akamai_cloudcertificates_lineages.test", "lineages.#", "0"),
 			),
 		},
-		"happy path - empty string next cursor stops pagination": {
+		"expect error - empty next cursor": {
 			config: func(t *testing.T) string {
 				return testutils.LoadFixtureString(t, "testdata/TestDataCloudCertificatesLineages/default.tf")
 			},
@@ -146,14 +146,13 @@ func TestDataLineages(t *testing.T) {
 					Lineages:   []cloudcertificates.Lineage{firstLineage},
 					NextCursor: ptr.To(""),
 					TotalCount: 1,
-				}, nil).Times(3)
+				}, nil).Once()
 			},
-			check: resource.ComposeAggregateTestCheckFunc(
-				resource.TestCheckResourceAttr("data.akamai_cloudcertificates_lineages.test", "lineages.#", "1"),
-				resource.TestCheckResourceAttr("data.akamai_cloudcertificates_lineages.test", "lineages.0.lineage_id", "500002"),
-			),
+			error: regexp.MustCompile(`(?s)` +
+				regexp.QuoteMeta(`Read Cloud Certificates Lineages failed`) + `.*` +
+				regexp.QuoteMeta(`pagination returned an empty cursor`)),
 		},
-		"happy path - empty lineages with non-empty cursor stops pagination": {
+		"happy path - empty lineages with valid cursor continues pagination": {
 			config: func(t *testing.T) string {
 				return testutils.LoadFixtureString(t, "testdata/TestDataCloudCertificatesLineages/default.tf")
 			},
@@ -164,6 +163,13 @@ func TestDataLineages(t *testing.T) {
 				}).Return(&cloudcertificates.ListLineagesResponse{
 					Lineages:   []cloudcertificates.Lineage{},
 					NextCursor: ptr.To("stale-cursor"),
+					TotalCount: 0,
+				}, nil).Times(3)
+				m.On("ListLineages", testutils.MockContext, cloudcertificates.ListLineagesRequest{
+					PageSize: cloudcertificates.MaxListLineagesPageSize,
+					After:    "stale-cursor",
+				}).Return(&cloudcertificates.ListLineagesResponse{
+					Lineages:   []cloudcertificates.Lineage{},
 					TotalCount: 0,
 				}, nil).Times(3)
 			},
@@ -309,6 +315,19 @@ func TestDataLineages(t *testing.T) {
 				regexp.QuoteMeta(`"title": "An unexpected error occurred."`) + `.*` +
 				regexp.QuoteMeta(`"status": 500`) + `.*` +
 				regexp.QuoteMeta(`"instance": "/error-types/internal-error?traceId=1234567891081"`)),
+		},
+		"nil page without error": {
+			config: func(t *testing.T) string {
+				return testutils.LoadFixtureString(t, "testdata/TestDataCloudCertificatesLineages/default.tf")
+			},
+			init: func(m *cloudcertificates.Mock) {
+				m.On("ListLineages", testutils.MockContext, cloudcertificates.ListLineagesRequest{
+					PageSize: cloudcertificates.MaxListLineagesPageSize,
+				}).Return((*cloudcertificates.ListLineagesResponse)(nil), nil).Once()
+			},
+			error: regexp.MustCompile(`(?s)` +
+				regexp.QuoteMeta("Read Cloud Certificates Lineages failed") + `.*` +
+				regexp.QuoteMeta("received nil page without error")),
 		},
 		"validation error - generation status": {
 			config: func(t *testing.T) string {

@@ -4,9 +4,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/datastream"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -150,9 +151,9 @@ func TestDataSourceDatasetFieldsRead(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &datastream.Mock{}
+			client := edgegrid.NewTestClient()
 			if test.withError == nil {
-				client.On("GetDatasetFields", testutils.MockContext, test.expectedRequest).Return(test.getDatasetFieldsReturn, nil).Times(3)
+				client.DataStream.On("GetDatasetFields", testutils.MockContext, test.expectedRequest).Return(test.getDatasetFieldsReturn, nil).Times(3)
 			}
 
 			step := resource.TestStep{
@@ -163,13 +164,11 @@ func TestDataSourceDatasetFieldsRead(t *testing.T) {
 				step.Check = resource.ComposeAggregateTestCheckFunc(test.checkFuncs...)
 			}
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps:                    []resource.TestStep{step},
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps:                    []resource.TestStep{step},
 			})
-			client.AssertExpectations(t)
+			client.DataStream.AssertExpectations(t)
 		})
 	}
 }

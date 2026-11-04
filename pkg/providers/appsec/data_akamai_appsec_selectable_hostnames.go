@@ -6,9 +6,9 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -70,7 +70,7 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceSelectableHostnamesRead")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -87,7 +87,7 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 		return diag.Errorf("either config_id or both contractid and groupdid must be supplied")
 	}
 
-	var version int
+	var version int64
 	if configID != 0 {
 		if version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 			return diag.FromErr(err)
@@ -170,7 +170,7 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(selectablehostnames.ConfigID))
+	d.SetId(strconv.FormatInt(selectablehostnames.ConfigID, 10))
 
 	return nil
 }

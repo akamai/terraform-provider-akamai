@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/ptr"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cloudcertificates"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/ptr"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -72,10 +72,8 @@ func TestDataActivations(t *testing.T) {
 		CheckEqual("activations.0.target_environment", "PRODUCTION").
 		CheckEqual("activations.0.created_by", "terraform-dev").
 		CheckEqual("activations.0.modified_by", "terraform-dev").
-		CheckMissing("activations.0.total_hostname_count").
-		CheckMissing("activations.0.in_progress_hostname_count").
 		CheckMissing("activations.0.pre_empted_by").
-		CheckMissing("activations.0.error_types").
+		CheckEqual("activations.0.errors.#", "0").
 		CheckEqual("activations.1.activation_id", "1256").
 		CheckEqual("activations.1.lineage_id", "500022").
 		CheckEqual("activations.1.activation_type", "ROLLBACK").
@@ -86,10 +84,8 @@ func TestDataActivations(t *testing.T) {
 		CheckEqual("activations.1.target_environment", "PRODUCTION").
 		CheckEqual("activations.1.created_by", "terraform-dev").
 		CheckEqual("activations.1.modified_by", "terraform-dev").
-		CheckMissing("activations.1.total_hostname_count").
-		CheckMissing("activations.1.in_progress_hostname_count").
 		CheckMissing("activations.1.pre_empted_by").
-		CheckMissing("activations.1.error_types").
+		CheckEqual("activations.1.errors.#", "0").
 		CheckEqual("activations.2.activation_id", "1254").
 		CheckEqual("activations.2.lineage_id", "500022").
 		CheckEqual("activations.2.activation_type", "REPLACE_STAGING").
@@ -100,10 +96,8 @@ func TestDataActivations(t *testing.T) {
 		CheckEqual("activations.2.target_environment", "STAGING").
 		CheckEqual("activations.2.created_by", "terraform-dev").
 		CheckEqual("activations.2.modified_by", "terraform-dev").
-		CheckMissing("activations.2.total_hostname_count").
-		CheckMissing("activations.2.in_progress_hostname_count").
 		CheckMissing("activations.2.pre_empted_by").
-		CheckMissing("activations.2.error_types")
+		CheckEqual("activations.2.errors.#", "0")
 
 	tests := map[string]struct {
 		init  func(*cloudcertificates.Mock)
@@ -184,45 +178,40 @@ func TestDataActivations(t *testing.T) {
 				},
 			},
 		},
-		"happy path - empty next cursor stops pagination": {
+		"expect error - empty next cursor": {
 			init: func(m *cloudcertificates.Mock) {
 				mockListActivations(m, maxPageSize, "", &cloudcertificates.ListActivationsResponse{
 					Items:      []cloudcertificates.GetActivationStatusResponse{promote, rollback, replaceStaging},
 					NextCursor: ptr.To(""),
 					TotalCount: 3,
-				}).Times(3)
+				}).Once()
 			},
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataActivations/without_limit.tf"),
-					Check: allActivationsChecker.
-						CheckMissing("limit").
-						Build(),
+					ExpectError: regexp.MustCompile(`(?s)` +
+						regexp.QuoteMeta(`Failed to retrieve lineage activations`) + `.*` +
+						regexp.QuoteMeta(`pagination returned an empty cursor`)),
 				},
 			},
 		},
-		"happy path - non-advancing cursor stops pagination": {
+		"expect error - non-advancing cursor": {
 			init: func(m *cloudcertificates.Mock) {
 				mockListActivations(m, maxPageSize, "", &cloudcertificates.ListActivationsResponse{
 					Items:      []cloudcertificates.GetActivationStatusResponse{promote},
 					NextCursor: ptr.To("cursor-a"),
-				}).Times(3)
-				// The API returns the same cursor it was given, so it never advances; the second page must be
-				// the last one requested, or pagination would loop forever.
+				}).Once()
 				mockListActivations(m, maxPageSize, "cursor-a", &cloudcertificates.ListActivationsResponse{
 					Items:      []cloudcertificates.GetActivationStatusResponse{},
 					NextCursor: ptr.To("cursor-a"),
-				}).Times(3)
+				}).Once()
 			},
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataActivations/without_limit.tf"),
-					Check: test.NewStateChecker("data.akamai_cloudcertificates_activations.test").
-						CheckEqual("lineage_id", "500022").
-						CheckMissing("limit").
-						CheckEqual("activations.#", "1").
-						CheckEqual("activations.0.activation_id", "1258").
-						Build(),
+					ExpectError: regexp.MustCompile(`(?s)` +
+						regexp.QuoteMeta(`Failed to retrieve lineage activations`) + `.*` +
+						regexp.QuoteMeta(`pagination returned a non-advancing cursor "cursor-a"`)),
 				},
 			},
 		},
@@ -234,20 +223,20 @@ func TestDataActivations(t *testing.T) {
 				}).Return(&cloudcertificates.ListActivationsResponse{
 					Items: []cloudcertificates.GetActivationStatusResponse{
 						{
-							ActivationID:            1258,
-							LineageID:               500022,
-							ActivationType:          "PROMOTE",
-							ActivationStatus:        "PARTIAL_SUCCESS",
-							GenerationID:            3032,
-							ActivationCreatedTime:   time.Date(2026, 7, 23, 13, 49, 12, 0, time.UTC),
-							ActivationModifiedTime:  time.Date(2026, 7, 23, 13, 49, 13, 0, time.UTC),
-							TargetEnvironment:       "PRODUCTION",
-							TotalHostnameCount:      ptr.To(int64(42)),
-							InProgressHostnameCount: ptr.To(int64(5)),
-							PreEmptedBy:             ptr.To(int64(1076)),
-							CreatedBy:               "terraform-dev",
-							ModifiedBy:              "terraform-dev",
-							ErrorTypes:              "/error-types/upstream-activation-error",
+							ActivationID:           1258,
+							LineageID:              500022,
+							ActivationType:         "PROMOTE",
+							ActivationStatus:       "PARTIAL_SUCCESS",
+							GenerationID:           3032,
+							ActivationCreatedTime:  time.Date(2026, 7, 23, 13, 49, 12, 0, time.UTC),
+							ActivationModifiedTime: time.Date(2026, 7, 23, 13, 49, 13, 0, time.UTC),
+							TargetEnvironment:      "PRODUCTION",
+							PreEmptedBy:            ptr.To(int64(1076)),
+							CreatedBy:              "terraform-dev",
+							ModifiedBy:             "terraform-dev",
+							Errors: []cloudcertificates.ActivationError{
+								{Type: "UPSTREAM_ERROR", Message: "An upstream service error occurred while processing the activation."},
+							},
 						},
 					},
 					TotalCount: 1,
@@ -269,10 +258,10 @@ func TestDataActivations(t *testing.T) {
 						CheckEqual("activations.0.target_environment", "PRODUCTION").
 						CheckEqual("activations.0.created_by", "terraform-dev").
 						CheckEqual("activations.0.modified_by", "terraform-dev").
-						CheckEqual("activations.0.total_hostname_count", "42").
-						CheckEqual("activations.0.in_progress_hostname_count", "5").
 						CheckEqual("activations.0.pre_empted_by", "1076").
-						CheckEqual("activations.0.error_types", "/error-types/upstream-activation-error").
+						CheckEqual("activations.0.errors.#", "1").
+						CheckEqual("activations.0.errors.0.type", "UPSTREAM_ERROR").
+						CheckEqual("activations.0.errors.0.message", "An upstream service error occurred while processing the activation.").
 						Build(),
 				},
 			},
@@ -377,10 +366,8 @@ func TestDataActivations(t *testing.T) {
 						CheckEqual("activations.149.target_environment", "PRODUCTION").
 						CheckEqual("activations.149.created_by", "terraform-dev").
 						CheckEqual("activations.149.modified_by", "terraform-dev").
-						CheckMissing("activations.149.total_hostname_count").
-						CheckMissing("activations.149.in_progress_hostname_count").
 						CheckMissing("activations.149.pre_empted_by").
-						CheckMissing("activations.149.error_types").
+						CheckEqual("activations.149.errors.#", "0").
 						Build(),
 				},
 			},
@@ -397,6 +384,22 @@ func TestDataActivations(t *testing.T) {
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataActivations/without_limit.tf"),
 					ExpectError: regexp.MustCompile(`(?s)` + regexp.QuoteMeta("Lineage Not Found") + `.*` +
 						regexp.QuoteMeta("No certificate lineage found with ID 500022")),
+				},
+			},
+		},
+		"nil page without error": {
+			init: func(m *cloudcertificates.Mock) {
+				m.On("ListActivations", testutils.MockContext, cloudcertificates.ListActivationsRequest{
+					LineageID: 500022,
+					PageSize:  maxPageSize,
+				}).Return((*cloudcertificates.ListActivationsResponse)(nil), nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataActivations/without_limit.tf"),
+					ExpectError: regexp.MustCompile(`(?s)` +
+						regexp.QuoteMeta("Failed to retrieve lineage activations") + `.*` +
+						regexp.QuoteMeta("received nil page without error")),
 				},
 			},
 		},

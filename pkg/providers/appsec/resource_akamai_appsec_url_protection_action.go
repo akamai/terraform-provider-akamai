@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/modifiers"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf/validators"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/framework/modifiers"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf/validators"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -134,7 +134,7 @@ func (r *urlProtectionActionResource) ValidateConfig(ctx context.Context, req re
 
 	client := r.Client.GetAPPSEC()
 
-	version, err := getLatestConfigVersion(ctx, int(config.ConfigID.ValueInt64()), r.Client.GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, config.ConfigID.ValueInt64(), r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return
@@ -143,7 +143,7 @@ func (r *urlProtectionActionResource) ValidateConfig(ctx context.Context, req re
 	// Get URL Protection Policy to check intelligentLoadShedding flag
 	getPolicyRequest := appsec.GetURLProtectionPolicyRequest{
 		ConfigID:              config.ConfigID.ValueInt64(),
-		ConfigVersion:         int64(version), // Use the modifiable version
+		ConfigVersion:         version, // Use the modifiable version
 		URLProtectionPolicyID: config.URLProtectionPolicyID.ValueInt64(),
 	}
 
@@ -189,7 +189,7 @@ func (r *urlProtectionActionResource) Create(ctx context.Context, req resource.C
 	}
 
 	configID := data.ConfigID.ValueInt64()
-	version, err := getModifiableConfigVersion(ctx, int(configID), "urlProtectionAction", r.Client.GetAPPSEC())
+	version, err := getModifiableConfigVersion(ctx, configID, "urlProtectionAction", r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return
@@ -204,7 +204,7 @@ func (r *urlProtectionActionResource) Create(ctx context.Context, req resource.C
 
 	updateRequest := appsec.UpdateURLProtectionPolicyActionsRequest{
 		ConfigID:              configID,
-		ConfigVersion:         int64(version),
+		ConfigVersion:         version,
 		PolicyID:              data.SecurityPolicyID.ValueString(),
 		URLProtectionPolicyID: data.URLProtectionPolicyID.ValueInt64(),
 		Body: appsec.URLProtectionPolicyActions{
@@ -222,7 +222,7 @@ func (r *urlProtectionActionResource) Create(ctx context.Context, req resource.C
 	// Read back the created resource to populate computed fields
 	readRequest := appsec.GetURLProtectionPolicyActionsRequest{
 		ConfigID:              configID,
-		ConfigVersion:         int64(version),
+		ConfigVersion:         version,
 		PolicyID:              data.SecurityPolicyID.ValueString(),
 		URLProtectionPolicyID: data.URLProtectionPolicyID.ValueInt64(),
 	}
@@ -254,7 +254,7 @@ func (r *urlProtectionActionResource) Read(ctx context.Context, req resource.Rea
 	}
 
 	configID := data.ConfigID.ValueInt64()
-	version, err := getLatestConfigVersion(ctx, int(configID), r.Client.GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, configID, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read config version", err.Error())
 		return
@@ -262,7 +262,7 @@ func (r *urlProtectionActionResource) Read(ctx context.Context, req resource.Rea
 
 	readRequest := appsec.GetURLProtectionPolicyActionsRequest{
 		ConfigID:              configID,
-		ConfigVersion:         int64(version),
+		ConfigVersion:         version,
 		PolicyID:              data.SecurityPolicyID.ValueString(),
 		URLProtectionPolicyID: data.URLProtectionPolicyID.ValueInt64(),
 	}
@@ -306,7 +306,7 @@ func (r *urlProtectionActionResource) Update(ctx context.Context, req resource.U
 	}
 
 	configID := data.ConfigID.ValueInt64()
-	version, err := getModifiableConfigVersion(ctx, int(configID), "urlProtectionAction", r.Client.GetAPPSEC())
+	version, err := getModifiableConfigVersion(ctx, configID, "urlProtectionAction", r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return
@@ -321,7 +321,7 @@ func (r *urlProtectionActionResource) Update(ctx context.Context, req resource.U
 
 	updateRequest := appsec.UpdateURLProtectionPolicyActionsRequest{
 		ConfigID:              configID,
-		ConfigVersion:         int64(version),
+		ConfigVersion:         version,
 		PolicyID:              data.SecurityPolicyID.ValueString(),
 		URLProtectionPolicyID: data.URLProtectionPolicyID.ValueInt64(),
 		Body: appsec.URLProtectionPolicyActions{
@@ -352,7 +352,7 @@ func (r *urlProtectionActionResource) Update(ctx context.Context, req resource.U
 	// Read back the updated resource to populate state correctly
 	readRequest := appsec.GetURLProtectionPolicyActionsRequest{
 		ConfigID:              configID,
-		ConfigVersion:         int64(version),
+		ConfigVersion:         version,
 		PolicyID:              data.SecurityPolicyID.ValueString(),
 		URLProtectionPolicyID: data.URLProtectionPolicyID.ValueInt64(),
 	}
@@ -384,7 +384,7 @@ func (r *urlProtectionActionResource) Delete(ctx context.Context, req resource.D
 	}
 
 	configID := data.ConfigID.ValueInt64()
-	version, err := getModifiableConfigVersion(ctx, int(configID), "urlProtectionAction", r.Client.GetAPPSEC())
+	version, err := getModifiableConfigVersion(ctx, configID, "urlProtectionAction", r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return
@@ -393,7 +393,7 @@ func (r *urlProtectionActionResource) Delete(ctx context.Context, req resource.D
 	// Delete sets action to "none"
 	deleteRequest := appsec.UpdateURLProtectionPolicyActionsRequest{
 		ConfigID:              configID,
-		ConfigVersion:         int64(version),
+		ConfigVersion:         version,
 		PolicyID:              data.SecurityPolicyID.ValueString(),
 		URLProtectionPolicyID: data.URLProtectionPolicyID.ValueInt64(),
 		Body: appsec.URLProtectionPolicyActions{

@@ -6,33 +6,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	tst "github.com/akamai/terraform-provider-akamai/v11/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cloudcertificates"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/ptr"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	tst "github.com/akamai/terraform-provider-akamai/v12/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
-
-// activationStatus builds a GetActivationStatusResponse for tests, mirroring the real captured shape confirmed in
-// edgegrid-golang's TestPromoteLineage fixtures.
-func activationStatus(lineageID, generationID, activationID int64, network, status string, created, modified time.Time) *cloudcertificates.GetActivationStatusResponse {
-	return &cloudcertificates.GetActivationStatusResponse{
-		ActivationID:           activationID,
-		LineageID:              lineageID,
-		GenerationID:           generationID,
-		ActivationType:         "PROMOTE",
-		ActivationStatus:       status,
-		TargetEnvironment:      network,
-		ActivationCreatedTime:  created,
-		ActivationModifiedTime: modified,
-		CreatedBy:              "terraform-dev",
-		ModifiedBy:             "terraform-dev",
-	}
-}
 
 func TestActivationResource(t *testing.T) {
 	t.Parallel()
@@ -65,6 +49,11 @@ func TestActivationResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesActivation/promote_production.tf"),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectUnknownValue(dsName, tfjsonpath.New("production")),
+						},
+					},
 					Check: test.NewStateChecker(dsName).
 						CheckEqual("lineage_id", "500035").
 						CheckEqual("production_generation_id", "7274").
@@ -78,10 +67,8 @@ func TestActivationResource(t *testing.T) {
 						CheckEqual("production.activation_modified_time", "2026-08-13T09:57:30Z").
 						CheckEqual("production.created_by", "terraform-dev").
 						CheckEqual("production.modified_by", "terraform-dev").
-						CheckMissing("production.total_hostname_count").
-						CheckMissing("production.in_progress_hostname_count").
 						CheckMissing("production.pre_empted_by").
-						CheckMissing("production.error_types").
+						CheckEqual("production.errors.#", "0").
 						Build(),
 				},
 			},
@@ -151,16 +138,23 @@ func TestActivationResource(t *testing.T) {
 					Items: []cloudcertificates.GetActivationStatusResponse{*activationStatus(500040, 8000, 7000, "PRODUCTION", "PENDING", t1, t1)},
 				}, nil).Once()
 				resp := activationStatus(500040, 8000, 7000, "PRODUCTION", "PARTIAL_SUCCESS", t1, t2)
-				resp.ErrorTypes = "/error-types/upstream-activation-error"
+				resp.Errors = []cloudcertificates.ActivationError{{Type: "UPSTREAM_ERROR", Message: "An upstream service error occurred while processing the activation."}}
 				m.On("GetActivationStatus", testutils.MockContext, cloudcertificates.GetActivationStatusRequest{LineageID: 500040, ActivationID: 7000}).
 					Return(resp, nil)
 			},
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesActivation/promote_production_partial.tf"),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectUnknownValue(dsName, tfjsonpath.New("production")),
+						},
+					},
 					Check: test.NewStateChecker(dsName).
 						CheckEqual("production.activation_status", "PARTIAL_SUCCESS").
-						CheckEqual("production.error_types", "/error-types/upstream-activation-error").
+						CheckEqual("production.errors.#", "1").
+						CheckEqual("production.errors.0.type", "UPSTREAM_ERROR").
+						CheckEqual("production.errors.0.message", "An upstream service error occurred while processing the activation.").
 						Build(),
 				},
 			},
@@ -173,7 +167,7 @@ func TestActivationResource(t *testing.T) {
 					Items: []cloudcertificates.GetActivationStatusResponse{*activationStatus(500041, 8001, 7001, "STAGING", "PENDING", t1, t1)},
 				}, nil).Once()
 				resp := activationStatus(500041, 8001, 7001, "STAGING", "FAILED", t1, t2)
-				resp.ErrorTypes = "/error-types/cert-parse-error"
+				resp.Errors = []cloudcertificates.ActivationError{{Type: "CERT_PARSE_ERROR", Message: "The uploaded certificate is malformed or invalid."}}
 				m.On("GetActivationStatus", testutils.MockContext, cloudcertificates.GetActivationStatusRequest{LineageID: 500041, ActivationID: 7001}).
 					Return(resp, nil).Once()
 				// a failed activation is never persisted (matching property_activation's own pollActivation, which
@@ -231,7 +225,7 @@ func TestActivationResource(t *testing.T) {
 					Items: []cloudcertificates.GetActivationStatusResponse{*activationStatus(500091, 9021, 9602, "PRODUCTION", "PENDING", t2, t2)},
 				}, nil).Once()
 				resp := activationStatus(500091, 9021, 9602, "PRODUCTION", "FAILED", t2, t2)
-				resp.ErrorTypes = "/error-types/cert-parse-error"
+				resp.Errors = []cloudcertificates.ActivationError{{Type: "CERT_PARSE_ERROR", Message: "The uploaded certificate is malformed or invalid."}}
 				m.On("GetActivationStatus", testutils.MockContext, cloudcertificates.GetActivationStatusRequest{LineageID: 500091, ActivationID: 9602}).
 					Return(resp, nil).Once()
 
@@ -294,7 +288,7 @@ func TestActivationResource(t *testing.T) {
 					Items: []cloudcertificates.GetActivationStatusResponse{*activationStatus(500092, 9040, 9701, "PRODUCTION", "PENDING", t2, t2)},
 				}, nil).Once()
 				resp := activationStatus(500092, 9040, 9701, "PRODUCTION", "FAILED", t2, t2)
-				resp.ErrorTypes = "/error-types/cert-parse-error"
+				resp.Errors = []cloudcertificates.ActivationError{{Type: "CERT_PARSE_ERROR", Message: "The uploaded certificate is malformed or invalid."}}
 				m.On("GetActivationStatus", testutils.MockContext, cloudcertificates.GetActivationStatusRequest{LineageID: 500092, ActivationID: 9701}).
 					Return(resp, nil).Once()
 
@@ -468,7 +462,7 @@ func TestActivationResource(t *testing.T) {
 					Return(activationStatus(500035, 7274, 6102, "PRODUCTION", "COMPLETE", t1, t1), nil).Twice()
 				// refresh during the plan-only step: the same activation now reports FAILED.
 				resp := activationStatus(500035, 7274, 6102, "PRODUCTION", "FAILED", t1, t2)
-				resp.ErrorTypes = "/error-types/cert-parse-error"
+				resp.Errors = []cloudcertificates.ActivationError{{Type: "CERT_PARSE_ERROR", Message: "The uploaded certificate is malformed or invalid."}}
 				m.On("GetActivationStatus", testutils.MockContext, req).
 					Return(resp, nil).Once()
 			},
@@ -935,7 +929,7 @@ func TestActivationResourceDefaultTimeout(t *testing.T) {
 		Return(activationStatus(500035, 7274, 6102, "PRODUCTION", "IN_PROGRESS", t1, t1), nil)
 
 	config := defaultSubproviderConfig()
-	config.activation.defaultTimeout = 20 * time.Millisecond
+	config.activation.defaultTimeout = 100 * time.Millisecond
 	config.activation.pollInterval = time.Microsecond
 
 	resource.UnitTest(t, resource.TestCase{
@@ -1019,6 +1013,83 @@ func TestActivationResourceImport(t *testing.T) {
 				{
 					// RES-10: the first plan after import must be empty
 					Config:   testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesActivation/import_both.tf"),
+					PlanOnly: true,
+				},
+			},
+		})
+		client.CloudCertificates.AssertExpectations(t)
+	})
+
+	t.Run("imports an activation with DELAYED status and recorded errors", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		resp := activationStatus(500070, 7400, 6400, "PRODUCTION", "DELAYED", t1, t2)
+		resp.Errors = []cloudcertificates.ActivationError{
+			{Type: "UPSTREAM_ERROR", Message: "An Akamai internal service error occurred while activating the certificate. If this error persists after several retries, contact your Akamai support team."},
+		}
+		client.CloudCertificates.On("GetActivationStatus", testutils.MockContext, cloudcertificates.GetActivationStatusRequest{LineageID: 500070, ActivationID: 6400}).
+			Return(resp, nil).Times(3)
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					ResourceName:       "akamai_cloudcertificates_activation.test",
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesActivation/import_delayed_with_errors.tf"),
+					ImportState:        true,
+					ImportStateId:      "500070,6400",
+					ImportStatePersist: true,
+					ImportStateCheck: test.NewImportChecker().
+						CheckEqual("lineage_id", "500070").
+						CheckEqual("production_generation_id", "7400").
+						CheckEqual("production.generation_id", "7400").
+						CheckEqual("production.activation_id", "6400").
+						CheckEqual("production.activation_status", "DELAYED").
+						CheckMissing("production.pre_empted_by").
+						CheckEqual("production.errors.#", "1").
+						CheckEqual("production.errors.0.type", "UPSTREAM_ERROR").
+						CheckEqual("production.errors.0.message", "An Akamai internal service error occurred while activating the certificate. If this error persists after several retries, contact your Akamai support team.").
+						Build(),
+				},
+				{
+					// the first plan after import must be empty
+					Config:   testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesActivation/import_delayed_with_errors.tf"),
+					PlanOnly: true,
+				},
+			},
+		})
+		client.CloudCertificates.AssertExpectations(t)
+	})
+
+	t.Run("imports an activation that was pre-empted by a later activation", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		resp := activationStatus(500071, 7401, 6401, "PRODUCTION", "PRE_EMPTED", t1, t2)
+		resp.PreEmptedBy = ptr.To(int64(6402))
+		client.CloudCertificates.On("GetActivationStatus", testutils.MockContext, cloudcertificates.GetActivationStatusRequest{LineageID: 500071, ActivationID: 6401}).
+			Return(resp, nil).Times(3)
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					ResourceName:       "akamai_cloudcertificates_activation.test",
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesActivation/import_pre_empted.tf"),
+					ImportState:        true,
+					ImportStateId:      "500071,6401",
+					ImportStatePersist: true,
+					ImportStateCheck: test.NewImportChecker().
+						CheckEqual("lineage_id", "500071").
+						CheckEqual("production_generation_id", "7401").
+						CheckEqual("production.generation_id", "7401").
+						CheckEqual("production.activation_id", "6401").
+						CheckEqual("production.activation_status", "PRE_EMPTED").
+						CheckEqual("production.pre_empted_by", "6402").
+						Build(),
+				},
+				{
+					// the first plan after import must be empty
+					Config:   testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesActivation/import_pre_empted.tf"),
 					PlanOnly: true,
 				},
 			},

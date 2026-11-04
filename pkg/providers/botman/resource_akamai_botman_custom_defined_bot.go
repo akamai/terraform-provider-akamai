@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/id"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -53,7 +53,7 @@ func resourceCustomDefinedBotCreate(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("botman", "resourceCustomDefinedBotCreate")
 	logger.Debugf("in resourceCustomDefinedBotCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -69,8 +69,8 @@ func resourceCustomDefinedBotCreate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	request := botman.CreateCustomDefinedBotRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		JsonPayload: json.RawMessage(jsonPayloadString),
 	}
 
@@ -96,7 +96,7 @@ func resourceCustomDefinedBotRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -109,8 +109,8 @@ func resourceCustomDefinedBotRead(ctx context.Context, d *schema.ResourceData, m
 	botID := iDParts[1]
 
 	request := botman.GetCustomDefinedBotRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 		BotID:    botID,
 	}
 
@@ -150,7 +150,7 @@ func resourceCustomDefinedBotUpdate(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -168,8 +168,8 @@ func resourceCustomDefinedBotUpdate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	request := botman.UpdateCustomDefinedBotRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		BotID:       botID,
 		JsonPayload: jsonPayload,
 	}
@@ -194,7 +194,7 @@ func resourceCustomDefinedBotDelete(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -207,8 +207,8 @@ func resourceCustomDefinedBotDelete(ctx context.Context, d *schema.ResourceData,
 	botID := iDParts[1]
 
 	request := botman.RemoveCustomDefinedBotRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 		BotID:    botID,
 	}
 

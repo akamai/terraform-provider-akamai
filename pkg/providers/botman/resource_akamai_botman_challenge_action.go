@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/id"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -55,7 +55,7 @@ func resourceChallengeActionCreate(ctx context.Context, d *schema.ResourceData, 
 	logger := meta.Log("botman", "resourceChallengeActionCreateAction")
 	logger.Debugf("in resourceChallengeActionCreateAction")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -71,8 +71,8 @@ func resourceChallengeActionCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	request := botman.CreateChallengeActionRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		JsonPayload: json.RawMessage(jsonPayloadString),
 	}
 
@@ -98,7 +98,7 @@ func resourceChallengeActionRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -111,8 +111,8 @@ func resourceChallengeActionRead(ctx context.Context, d *schema.ResourceData, m 
 	actionID := iDParts[1]
 
 	request := botman.GetChallengeActionRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 		ActionID: actionID,
 	}
 
@@ -153,7 +153,7 @@ func resourceChallengeActionUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -171,8 +171,8 @@ func resourceChallengeActionUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	request := botman.UpdateChallengeActionRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		ActionID:    actionID,
 		JsonPayload: jsonPayload,
 	}
@@ -197,7 +197,7 @@ func resourceChallengeActionDelete(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -210,8 +210,8 @@ func resourceChallengeActionDelete(ctx context.Context, d *schema.ResourceData, 
 	actionID := iDParts[1]
 
 	removeChallengeAction := botman.RemoveChallengeActionRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 		ActionID: actionID,
 	}
 

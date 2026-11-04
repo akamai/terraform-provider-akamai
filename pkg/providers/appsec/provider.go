@@ -2,7 +2,7 @@
 package appsec
 
 import (
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/subprovider"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -161,7 +161,9 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 // FrameworkResources returns the appsec resources implemented using terraform-plugin-framework.
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
+		NewClientsideProtectionConfigurationResource,
 		NewRapidRulesResource,
+		NewScriptBehaviorRuleResource,
 		NewSecurityPolicyProtectionsResource,
 		NewURLEvasionDefenseResource,
 		NewURLProtectionActionResource,
@@ -174,8 +176,11 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 // FrameworkDataSources returns the appsec data sources implemented using terraform-plugin-framework.
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
+		NewClientsideProtectionConfigurationDataSource,
 		NewCustomRulesUsageDataSource,
 		NewRapidRulesDataSource,
+		NewScriptBehaviorRuleDataSource,
+		NewScriptBehaviorRulesDataSource,
 		NewURLEvasionDefenseDataSource,
 		NewURLProtectionPoliciesActionsDataSource,
 		NewURLProtectionPoliciesDataSource,
